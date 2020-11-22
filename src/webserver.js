@@ -24,6 +24,9 @@ function handler(req, res) {
       case "css":
         res.writeHead(200, { 'Content-Type': 'text/css' }); //write CSS
         break;
+      case "js":
+          res.writeHead(200, { 'Content-Type': 'text/javascript' }); //write JS
+          break;
       default:
         res.writeHead(200, { 'Content-Type': 'text/plain' }); //write plain text
     }
