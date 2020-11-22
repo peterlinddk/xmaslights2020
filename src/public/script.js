@@ -6,6 +6,13 @@ function loaded() {
   console.log("Start");
   buildSVG();
   positionSpans();
+  window.addEventListener("resize", resize);
+}
+
+function resize() {
+  console.log("resize");
+  buildSVG();
+  positionSpans();
 }
 
 function buildSVG() {
@@ -20,6 +27,8 @@ function buildSVG() {
   svg.setAttribute("viewBox", `0 0 ${width} 20`);
 
   const ruler = svg.querySelector("#ruler");
+  // remove everything inside the ruler
+  ruler.innerHTML = "";
 
   // draw hour-lines
   for (let h = 0; h < 25; h++) {
