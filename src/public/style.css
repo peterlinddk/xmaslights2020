@@ -2,3 +2,23 @@ body {
   background-color: #444;
   color: yellow;
 }
+
+#tracks {
+  display: grid;
+  grid-template-columns: max-content auto;
+  grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: .5em 1em;
+}
+
+.timeline {
+  background-color: #aaa;
+  position: relative;
+}
+
+.timeline span {
+  display: block;
+  position: absolute;
+  width: 20vw; /* TODO: Set depending on width and height */
+  height: 100%;
+  background-color: yellow;
+}
