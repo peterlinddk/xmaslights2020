@@ -66,6 +66,28 @@
         <span data-start-time="5:30" data-end-time="6:00" data-value="on"></span>
         <span data-start-time="6:15" data-end-time="6:30" data-value="on"></span>
       </div>
+
+      <div id="controls">Controls</div>
+      <div id="timecodes">
+        <svg viewBox="0 0 240 12">
+          <defs>
+            <style>
+              line {
+                stroke: #aaa;
+                stroke-width: 1px;
+              }
+              .small {
+                text-anchor: middle;
+                font-family: Arial;
+                font-size: 10px;
+                fill: #888; 
+              }
+            </style>
+          </defs>
+
+          <g id="ruler"></g>
+        </svg>
+      </div>
     </div>
 
     <script src="script.js"></script>
