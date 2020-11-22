@@ -22,3 +22,16 @@ body {
   height: 100%;
   background-color: yellow;
 }
+
+/* buttons */
+#controls {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+}
+button {
+  min-width: 52px;
+}
+button#zoom_in .symbol {
+  font-size: 120%;
+}

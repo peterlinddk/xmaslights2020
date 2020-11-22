@@ -7,6 +7,9 @@ function loaded() {
   buildSVG();
   positionSpans();
   window.addEventListener("resize", resize);
+
+  document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", performAction));
+
 }
 
 function resize() {
@@ -15,12 +18,14 @@ function resize() {
   positionSpans();
 }
 
+let zoomFactor = 1;
+
 function buildSVG() {
   const svg = document.querySelector("#timecodes svg");
 
   const width = svg.clientWidth;
   // one hour is width/24 - one minute is width/1440
-  const hourWidth = width / 24;
+  const hourWidth = width / 24 * zoomFactor;
   const minuteWidth = hourWidth / 60;
 
   // set viewBox
@@ -68,7 +73,7 @@ function positionSpans() {
   document.querySelectorAll(".timeline").forEach(timeline => {
   
     // Find width of this timeline - should be the same for all of them
-    const width = timeline.clientWidth;
+    const width = timeline.clientWidth * zoomFactor;
     // one hour is width/24 - one minute is width/1440
     const hourWidth = width / 24;
     const minuteWidth = hourWidth / 60;
@@ -87,11 +92,44 @@ function positionSpans() {
 
       const pixelWidth = hour * hourWidth + minute * minuteWidth - pixelStart;
       span.style.width = pixelWidth + "px";
-
-      
-      
-      
     });
   });
     
+}
+
+function performAction(event) {
+  // find action to perform
+  let target = event.target;
+  let action;
+
+  // Find the actual action - the target might be a child of the element with the action
+  while (!action) {
+    action = target.dataset.action;
+    target = target.parentElement;
+  }
+
+//  console.log(`Do action: ${action}`);
+  switch (action) {
+    case "zoom_in":
+      zoomIn();
+      break;
+    case "zoom_out":
+      zoomOut();
+      break;
+  }
+}
+
+function zoomIn() {
+  console.log("zoom in");
+  zoomFactor += .2;
+  resize();
+}
+
+function zoomOut() {
+  console.log("zoom out");
+  zoomFactor -= .2;
+  if (zoomFactor < 1) {
+    zoomFactor = 1;
+  }
+  resize();
 }
