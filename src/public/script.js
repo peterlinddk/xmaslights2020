@@ -145,6 +145,11 @@ const scroller = {
     this.scrollbar = document.querySelector("#scrollbar");
     this.scrollarea = document.querySelector("#scroller");
 
+    this.scrollBarX = 0;
+    this.scrollBarW = this.scrollarea.clientWidth;
+
+    this.updateScrollBar();
+
     // add eventlisteners - only mousedown for starters
     this.scrollbar.addEventListener("mousedown", this);
   },
@@ -203,6 +208,11 @@ const scroller = {
     // console.log("move");
     // console.log(event);
 
+    // limits
+    const maxWidth = this.scrollarea.clientWidth - this.scrollbar.offsetLeft + this.scrollarea.offsetLeft;
+    const minWidth = 16 * 3;
+    const maxX = this.scrollarea.clientWidth - this.scrollbar.clientWidth;
+
     // Find drag point relative to scrollarea
     this.dragX = event.clientX - this.scrollarea.offsetLeft;
 
@@ -211,36 +221,66 @@ const scroller = {
     if (this.grabbedElement === "scrollbar") {
       // move entire scrollbar to the dragged position (with the controlPoint!)
       let newX = this.dragX - this.controlPoint; 
+
+      // Prevent moving to far to the left
       if (newX < 0) {
         newX = 0;
       }
-      // TODO: Prevent moving to far to the right
-  
-      this.scrollbar.style.left = newX + "px";
+
+      // Prevent moving to far to the right
+      if (newX > maxX  ) {
+        newX = maxX;
+      }
+        
+      this.scrollBarX = newX;
     } else if (this.grabbedElement === "end") {
       // move end by setting the width to match the new dragX position
       let newW = this.controlPoint + this.remainder + (this.dragX - this.startX);
-      //  TODO: Check for limits
+      
+      // Prevent moving to far to the right
+      if (newW > maxWidth ) {
+        newW = maxWidth;
+      }
+      // Prevent moving to far to the left
+      if (newW < minWidth) {
+        newW = minWidth;
+      }
 
-      this.scrollbar.style.width = newW + "px";
+      this.scrollBarW = newW;
     } else if (this.grabbedElement === "start") {
       // move start first by setting the newX to the dragged position
       let newX = this.dragX - this.controlPoint; 
 
       if (newX < 0) {
         newX = 0;
+      }
+      // Only recalculate if scrollbar has moved - and isn't dragged around 0
+      if (newX !== 0 || this.scrollBarX !== 0) {
+        // Then calculate the new width, to avoid moving the end-point
+        let newW = this.controlPoint + this.remainder - (this.dragX - this.startX);
+
+        // Prevent moving to far to the left
+        if (newW + newX > this.scrollarea.clientWidth) {
+          newW = this.scrollarea.clientWidth - newX;
+        }
+        // Prevent moving to far to the right
+        if (newW < minWidth) {
+          // Do NOT modify scrollbarX or W if the scrollbar has been moved to be to small 
+          newW = this.scrollBarW;
+          newX = this.scrollBarX;
+        }
+        this.scrollBarW = newW;
       }      
-      // NOTE: newW grows when newX hits 0 - maybe that is okay ... 
-      // Then calculate the new width, to avoid moving the end-point
-      let newW = this.controlPoint + this.remainder - (this.dragX - this.startX);
-
-     
-      // TODO: Prevent from getting to small
-
-      this.scrollbar.style.left = newX + "px";
-      this.scrollbar.style.width = newW + "px";
-
+      
+      this.scrollBarX = newX;
     }
+
+    this.updateScrollBar();
+
+  },
+  updateScrollBar() {
+    this.scrollbar.style.left = this.scrollBarX + "px";
+    this.scrollbar.style.width = this.scrollBarW + "px";
   }
 
 }
