@@ -4,13 +4,14 @@ window.addEventListener("DOMContentLoaded", loaded);
 
 function loaded() {
   console.log("Start");
+  scroller.init();
   buildSVG();
   positionSpans();
   window.addEventListener("resize", resize);
 
   document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", performAction));
 
-  scroller.init();
+  
 }
 
 function resize() {
@@ -30,7 +31,7 @@ function buildSVG() {
   const minuteWidth = hourWidth / 60;
 
   // set viewBox
-  svg.setAttribute("viewBox", `0 0 ${width} 20`);
+  svg.setAttribute("viewBox", `${width*scroller.getOffset()*zoomFactor} 0 ${width} 20`);
 
   const ruler = svg.querySelector("#ruler");
   // remove everything inside the ruler
@@ -78,6 +79,8 @@ function positionSpans() {
     // one hour is width/24 - one minute is width/1440
     const hourWidth = width / 24;
     const minuteWidth = hourWidth / 60;
+
+    const offset = width * scroller.getOffset();
     
     
     timeline.querySelectorAll("span").forEach(span => {
@@ -87,7 +90,7 @@ function positionSpans() {
       let [hour, minute] = startTime.split(":").map(val => Number(val));
       
       const pixelStart = hour * hourWidth + minute * minuteWidth;
-      span.style.left = pixelStart + "px";
+      span.style.left = pixelStart - offset + "px";
 
       [hour, minute] = endTime.split(":").map(val => Number(val));
 
@@ -159,7 +162,7 @@ const scroller = {
     return this.scrollarea.clientWidth / this.scrollBarW;
   },
   getOffset() {
-
+    return this.scrollBarX / this.scrollarea.clientWidth;
   },
   handleEvent(event) {
     // console.log(`Event type: ${event.type}`);

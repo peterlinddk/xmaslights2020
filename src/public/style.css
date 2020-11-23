@@ -15,6 +15,7 @@ body {
 .timeline {
   background-color: #aaa;
   position: relative;
+  overflow: hidden;
 }
 
 .timeline span {
