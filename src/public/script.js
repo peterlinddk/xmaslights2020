@@ -10,6 +10,7 @@ function loaded() {
 
   document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", performAction));
 
+  scroller.init();
 }
 
 function resize() {
@@ -132,4 +133,114 @@ function zoomOut() {
     zoomFactor = 1;
   }
   resize();
+}
+
+
+
+/* scroller */
+
+const scroller = {
+
+  init() {
+    this.scrollbar = document.querySelector("#scrollbar");
+    this.scrollarea = document.querySelector("#scroller");
+
+    // add eventlisteners - only mousedown for starters
+    this.scrollbar.addEventListener("mousedown", this);
+  },
+  handleEvent(event) {
+    // console.log(`Event type: ${event.type}`);
+    if (event.type === "mouseup" || event.type === "mouseleave") {
+      this.release(event);
+    }
+    if (event.type === "mousedown") {
+      this.grab(event);
+    }
+    if (event.type === "mousemove") {
+      this.move(event);
+    }
+  },
+  grab(event) {
+    // console.log("Grab!");
+    // console.log(event);
+    this.grabbing = true;
+    this.scrollbar.classList.add("grabbing");
+    this.scrollarea.addEventListener("mousemove", this);
+    this.scrollarea.addEventListener("mouseup", this);
+    this.scrollarea.addEventListener("mouseleave", this);
+
+    // Find click point relative to scrollarea
+    this.startX = event.clientX - this.scrollarea.offsetLeft;
+
+    // Find click point relative to scrollbar
+    this.controlPoint = event.layerX;
+
+    // Find remainder of scrollbar, after the controlpoint - used for calculating width change
+    this.remainder = this.scrollbar.clientWidth - this.controlPoint;
+
+    // figure out which element is grabbed
+    if (this.controlPoint < 16) {
+      this.grabbedElement = "start";
+    } else if (this.controlPoint > this.scrollbar.clientWidth - 16) {
+      this.grabbedElement = "end";
+    } else {
+      this.grabbedElement = "scrollbar";
+    }
+
+    // console.log(`Grab: ${this.grabbedElement} @ ${this.controlPoint} ~ ${this.startX} + ${this.remainder} remaining`);
+  },
+  release(event) {
+    // console.log("Release!");
+    this.grabbing = false;
+    this.scrollbar.classList.remove("grabbing");
+    this.scrollarea.removeEventListener("mousemove", this);
+    this.scrollarea.removeEventListener("mouseup", this);
+    this.scrollarea.removeEventListener("mouseleave", this);
+    
+    this.grabbedElement = null;
+  },
+  move(event) {
+    // console.log("move");
+    // console.log(event);
+
+    // Find drag point relative to scrollarea
+    this.dragX = event.clientX - this.scrollarea.offsetLeft;
+
+    // console.log(`Moved from ${this.startX} to ${this.dragX}`);
+
+    if (this.grabbedElement === "scrollbar") {
+      // move entire scrollbar to the dragged position (with the controlPoint!)
+      let newX = this.dragX - this.controlPoint; 
+      if (newX < 0) {
+        newX = 0;
+      }
+      // TODO: Prevent moving to far to the right
+  
+      this.scrollbar.style.left = newX + "px";
+    } else if (this.grabbedElement === "end") {
+      // move end by setting the width to match the new dragX position
+      let newW = this.controlPoint + this.remainder + (this.dragX - this.startX);
+      //  TODO: Check for limits
+
+      this.scrollbar.style.width = newW + "px";
+    } else if (this.grabbedElement === "start") {
+      // move start first by setting the newX to the dragged position
+      let newX = this.dragX - this.controlPoint; 
+
+      if (newX < 0) {
+        newX = 0;
+      }      
+      // NOTE: newW grows when newX hits 0 - maybe that is okay ... 
+      // Then calculate the new width, to avoid moving the end-point
+      let newW = this.controlPoint + this.remainder - (this.dragX - this.startX);
+
+     
+      // TODO: Prevent from getting to small
+
+      this.scrollbar.style.left = newX + "px";
+      this.scrollbar.style.width = newW + "px";
+
+    }
+  }
+
 }
