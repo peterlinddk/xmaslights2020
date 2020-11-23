@@ -82,7 +82,6 @@ function positionSpans() {
 
     const offset = width * scroller.getOffset();
     
-    
     timeline.querySelectorAll("span").forEach(span => {
       const startTime = span.dataset.startTime;
       const endTime = span.dataset.endTime;
@@ -112,25 +111,15 @@ function performAction(event) {
     target = target.parentElement;
   }
 
-//  console.log(`Do action: ${action}`);
+  console.log(`Do action: ${action}`);
   switch (action) {
     case "zoom_in":
-      zoomIn();
+      // zoomIn();
       break;
     case "zoom_out":
-      zoomOut();
+      // zoomOut();
       break;
   }
-}
-
-function zoomIn() {
-  console.log("zoom in");
-  setZoom(zoomFactor + .2);
-}
-
-function zoomOut() {
-  console.log("zoom out");
-  setZoom(zoomFactor - .2);
 }
 
 function setZoom(zoom) {
@@ -140,7 +129,6 @@ function setZoom(zoom) {
   zoomFactor = zoom;
   resize();
 }
-
 
 /* scroller */
 
