@@ -122,19 +122,21 @@ function performAction(event) {
 
 function zoomIn() {
   console.log("zoom in");
-  zoomFactor += .2;
-  resize();
+  setZoom(zoomFactor + .2);
 }
 
 function zoomOut() {
   console.log("zoom out");
-  zoomFactor -= .2;
-  if (zoomFactor < 1) {
-    zoomFactor = 1;
-  }
-  resize();
+  setZoom(zoomFactor - .2);
 }
 
+function setZoom(zoom) {
+  if (zoom < 1) {
+    zoom = 1;
+  }
+  zoomFactor = zoom;
+  resize();
+}
 
 
 /* scroller */
@@ -152,6 +154,12 @@ const scroller = {
 
     // add eventlisteners - only mousedown for starters
     this.scrollbar.addEventListener("mousedown", this);
+  },
+  getZoomFactor() {
+    return this.scrollarea.clientWidth / this.scrollBarW;
+  },
+  getOffset() {
+
   },
   handleEvent(event) {
     // console.log(`Event type: ${event.type}`);
@@ -281,6 +289,7 @@ const scroller = {
   updateScrollBar() {
     this.scrollbar.style.left = this.scrollBarX + "px";
     this.scrollbar.style.width = this.scrollBarW + "px";
+    setZoom(this.getZoomFactor());
   }
 
 }
