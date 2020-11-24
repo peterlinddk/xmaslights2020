@@ -16,6 +16,11 @@ function loaded() {
 
 function resize() {
   console.log("resize");
+  scroller.resize();
+  redraw();
+}
+
+function redraw() {
   buildSVG();
   positionSpans();
 }
@@ -127,7 +132,7 @@ function setZoom(zoom) {
     zoom = 1;
   }
   zoomFactor = zoom;
-  resize();
+  redraw();
 }
 
 /* scroller */
@@ -138,19 +143,33 @@ const scroller = {
     this.scrollbar = document.querySelector("#scrollbar");
     this.scrollarea = document.querySelector("#scroller");
 
+    this.scrollWidth = this.scrollarea.clientWidth 
     this.scrollBarX = 0;
-    this.scrollBarW = this.scrollarea.clientWidth;
+    this.scrollBarW = this.scrollWidth;
 
     this.updateScrollBar();
 
     // add eventlisteners - only mousedown for starters
     this.scrollbar.addEventListener("mousedown", this);
   },
+  resize() {
+    // called when the screen resizes - and the scrollarea has a new size!
+    const o_zoom = this.getZoomFactor();
+    const o_offset = this.getOffset();
+
+    // set new scrollWidth
+    this.scrollWidth = this.scrollarea.clientWidth;
+
+    // Re-calculate the Bar width and X values with the new scrollWidth
+    this.scrollBarW = this.scrollWidth / o_zoom;
+    this.scrollBarX = this.scrollWidth * o_offset;
+    this.updateScrollBar();
+  },
   getZoomFactor() {
-    return this.scrollarea.clientWidth / this.scrollBarW;
+    return this.scrollWidth / this.scrollBarW;
   },
   getOffset() {
-    return this.scrollBarX / this.scrollarea.clientWidth;
+    return this.scrollBarX / this.scrollWidth;
   },
   handleEvent(event) {
     // console.log(`Event type: ${event.type}`);
@@ -208,9 +227,9 @@ const scroller = {
     // console.log(event);
 
     // limits
-    const maxWidth = this.scrollarea.clientWidth - this.scrollbar.offsetLeft + this.scrollarea.offsetLeft;
+    const maxWidth = this.scrollWidth - this.scrollbar.offsetLeft;
     const minWidth = 16 * 3;
-    const maxX = this.scrollarea.clientWidth - this.scrollbar.clientWidth;
+    const maxX = this.scrollWidth - this.scrollbar.clientWidth;
 
     // Find drag point relative to scrollarea
     this.dragX = event.clientX - this.scrollarea.offsetLeft;
@@ -259,8 +278,8 @@ const scroller = {
         let newW = this.controlPoint + this.remainder - (this.dragX - this.startX);
 
         // Prevent moving to far to the left
-        if (newW + newX > this.scrollarea.clientWidth) {
-          newW = this.scrollarea.clientWidth - newX;
+        if (newW + newX > this.scrollWidth) {
+          newW = this.scrollWidth - newX;
         }
         // Prevent moving to far to the right
         if (newW < minWidth) {
@@ -276,11 +295,11 @@ const scroller = {
 
     this.updateScrollBar();
 
+    setZoom(this.getZoomFactor());
   },
   updateScrollBar() {
     this.scrollbar.style.left = this.scrollBarX + "px";
     this.scrollbar.style.width = this.scrollBarW + "px";
-    setZoom(this.getZoomFactor());
   }
 
 }
