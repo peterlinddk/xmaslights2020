@@ -1,17 +1,75 @@
 "use strict";
 
-window.addEventListener("DOMContentLoaded", loaded);
+window.addEventListener("DOMContentLoaded", start);
+
+let sequence = null;
+
+async function start() {
+  console.log("Start");
+  sequence = await loadSequence();
+  buildSequence();
+  loaded();
+}
+
+async function loadSequence() {
+  const resp = await fetch("sequence.json");
+  const data = await resp.json();
+
+  return data;
+}
+
+function buildSequence() {
+  console.log("Build sequence");
+  console.log(sequence);
+
+  const tracks = document.querySelector("#tracks");
+  // NOTE: Tracks isn't cleared - maybe that should be an option for loading other sequences
+  const controls = document.querySelector("#tracks #controls");
+
+  /*
+    // A Track looks like this: (two divs, one for info, another for the timeline with dynamically created spans)
+    <div id="track1_id">NAME</div>
+    <div id="track1_timeline" class="timeline">
+      <span data-start-time="0:00" data-end-time="3:00" data-value="on"></span>
+      <span data-start-time="4:00" data-end-time="5:00" data-value="on"></span>
+      <span data-start-time="5:30" data-end-time="5:45" data-value="on"></span>
+    </div>
+  */
+  sequence.tracks.forEach((track, index) => {
+    const infodiv = document.createElement("div");
+    infodiv.id = `track${index}_id`;
+    infodiv.textContent = track.name;
+
+    tracks.insertBefore(infodiv, controls);
+
+    const timelinediv = document.createElement("div");
+    timelinediv.id = `track${index}_timeline`;
+    timelinediv.classList.add("timeline");
+
+    // create timeline and spans
+    track.timeline.forEach(time => {
+      const span = document.createElement("span");
+      span.dataset.startTime = time.start;
+      span.dataset.endTime = time.end;
+      span.dataset.value = "on";
+
+      timelinediv.append(span);
+
+    });
+    tracks.insertBefore(timelinediv, controls);
+  });
+ 
+}
+
 
 function loaded() {
-  console.log("Start");
+  console.log("Loaded");
   scroller.init();
   buildSVG();
   positionSpans();
   window.addEventListener("resize", resize);
 
   document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", performAction));
-
-  
 }
 
 function resize() {
