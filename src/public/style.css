@@ -26,6 +26,14 @@ body {
   background-color: yellow;
 }
 
+.timeline span.selected.resize {
+  cursor: ew-resize;
+}
+
+.timeline span.selected.move {
+  cursor: move;
+}
+
 #scroller {
   grid-column: 1 / 3;
   background-color: #333;
