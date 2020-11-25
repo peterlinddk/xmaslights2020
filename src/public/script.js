@@ -73,6 +73,8 @@ function loaded() {
 
   // add editor-feature to spans
   document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mousedown", timespanEditor));
+  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mouseenter", showTimeSpanInfo));
+
   document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
 
   // add other button actions (none implemented at the moment)
@@ -357,6 +359,36 @@ function getTimeSpanFromUuid(uuid) {
 }
 
 /* timeline edit */
+function showTimeSpanInfo(event) {
+  // find timespan object
+  const timeSpan = getTimeSpanFromUuid(event.target.dataset.uuid);
+  
+  // find popup
+  const popup = document.querySelector("#popup");
+
+  // position popup
+  popup.style.left = event.clientX - popup.getBoundingClientRect().width / 2 + "px";
+  popup.style.top = timeSpan.element.parentElement.offsetTop - 20 + "px";
+
+  // Write info in popup
+  updatePopup(timeSpan);
+
+  timeSpan.element.addEventListener("mouseleave", hideTimeSpanInfo);
+
+  function hideTimeSpanInfo(event) {
+    popup.classList.remove("show");
+    timeSpan.element.removeEventListener("mouseleave", hideTimeSpanInfo);
+  }
+
+  // show popup
+  popup.classList.add("show");
+}
+
+function updatePopup(timeSpan) {
+  const popup = document.querySelector("#popup");
+  popup.querySelector("#start-time").textContent = timeSpan.start;
+  popup.querySelector("#end-time").textContent = timeSpan.end;
+}
 
 function createTimeSpan(event) {
   // Only create a new timespan if clicked on empty part of the timeline
@@ -391,6 +423,7 @@ function createTimeSpan(event) {
       const span = timeSpan.createElement();
       timeline.element.append(span);
       span.addEventListener("mousedown", timespanEditor);
+      span.addEventListener("mouseenter", showTimeSpanInfo);
       timeSpan.position();
       // That should be it
     }
@@ -516,6 +549,7 @@ const timespanEditor = {
       this.span.start.timecode = newStartTime.timecode;
       this.span.end.timecode = newEndTime.timecode;
       this.span.position();
+      updatePopup(this.span);
     }
   },
 };
