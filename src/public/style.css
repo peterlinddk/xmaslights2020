@@ -16,6 +16,7 @@ body {
   background-color: #aaa;
   position: relative;
   overflow: hidden;
+  cursor: copy;
 }
 
 .timeline span {
@@ -25,6 +26,7 @@ body {
   height: 100%;
   background-color: yellow;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
 .timeline span::before {

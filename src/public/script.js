@@ -57,14 +57,7 @@ function buildSequence() {
 
     // create timeline and spans
     track.timeline.timespans.forEach((timeSpan) => {
-      const span = document.createElement("span");
-      span.dataset.startTime = timeSpan.start.timecode;
-      span.dataset.endTime = timeSpan.end.timecode;
-      span.dataset.value = "on";
-      span.dataset.uuid = timeSpan.uuid;
-
-      timeSpan.element = span;
-
+      const span = timeSpan.createElement();
       timelinediv.append(span);
     });
     tracks.insertBefore(timelinediv, controls);
@@ -80,6 +73,7 @@ function loaded() {
 
   // add editor-feature to spans
   document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mousedown", timespanEditor));
+  document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
 
   // add other button actions (none implemented at the moment)
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
@@ -363,7 +357,48 @@ function getTimeSpanFromUuid(uuid) {
 }
 
 /* timeline edit */
-// TODO: Make feature to create new timespans - to cut timespan into two, and to join two timespans into one
+
+function createTimeSpan(event) {
+  // Only create a new timespan if clicked on empty part of the timeline
+  if (event.target.classList.contains("timeline")) {
+    console.log("Create new TimeSpan here");
+    console.log(event);
+
+    // Find the timeline object
+    const timeline = sequence.tracks.find(track => track.timeline.uuid === event.target.dataset.uuid).timeline;
+    
+    // Find the position clicked
+    const clickPoint = event.clientX - timeline.element.offsetLeft + timeline.offset;
+    
+    // Find the nearest time in minutes - TODO: snap to closest (earlier) 5, 15, 30 or 0 - if not conflicting with existing timespan
+    const minutes = clickPoint / timeline.minuteWidth;
+    const clickTime = new TimeCode("0:00");
+    clickTime.addMinutes(minutes);
+
+    console.log(`Click på ${clickPoint} @ ${clickTime}`);
+    // Create new TimeSpan object with starttime at this, and endtime 15 minutes later (always a width of 15 minutes for new timespans)
+    const timeSpan = new TimeSpan({ start: clickTime.timecode, end: clickTime.addMinutes(15).timecode }, timeline);
+    
+    // Make sure this timespan doesn't overlap existing timespans
+    if (timeline.overlaps(timeSpan)) {
+      console.warn("Overlap! Don't create");
+      // TODO: Inform the user in a better manner!
+    } else {
+      // Add the new object to the timeline (it should insert it correctly sorted)
+      timeline.add(timeSpan);
+      
+      // Create and draw/update a HTML object for the TimeSpan - remember to add an eventlistener as well
+      const span = timeSpan.createElement();
+      timeline.element.append(span);
+      span.addEventListener("mousedown", timespanEditor);
+      timeSpan.position();
+      // That should be it
+    }
+  }
+}
+
+
+// TODO: Make feature to delete timespan, to cut timespan into two, and to join two timespans into one
 const timespanEditor = {
   select(event) {
     const element = event.currentTarget;
@@ -541,6 +576,33 @@ class TimeLine {
     return this.timespans[index + 1];
   }
 
+  add(timeSpan) {
+    // Find the index just before this timeSpan
+    let previous = undefined;
+    let i = 0;
+    for (i = 0; i < this.timespans.length; i++) {
+      // If the ith timespan is after this one, then i-1 would be before this one!
+      if (this.timespans[i].start.isAfter(timeSpan.start)) {
+        previous = this.timespans[i - 1];
+        break;
+      }
+    }
+
+    this.timespans.splice(i, 0, timeSpan);
+  }
+
+  // returns true if the timeSpan argument overlaps any other timespans on the timeline
+  overlaps(timeSpan) {
+    let overlap = false;
+    for (let i = 0; i < this.timespans.length; i++) {
+      const checking = this.timespans[i];
+      if (timeSpan.start.isBefore(checking.end) && timeSpan.end.isAfter(checking.start)) {
+        overlap = true;
+        break;
+      }
+    }
+    return overlap;
+  }
 
   get width() {
     return this.element.clientWidth * zoomFactor;
@@ -577,6 +639,18 @@ class TimeSpan {
   toString() {
     return `<span start="${this.start}" end="${this.end}" uuid="${this.uuid}">`;
   }
+
+  createElement() {
+    const span = document.createElement("span");
+    span.dataset.startTime = this.start.timecode;
+    span.dataset.endTime = this.end.timecode;
+    span.dataset.value = "on";
+    span.dataset.uuid = this.uuid;
+
+    this.element = span;
+    return span;
+  }
+
 }
 
 // Unique ID - from: https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid
@@ -596,11 +670,13 @@ class TimeCode {
     } else {
       this.timecode = str;
     }
+    return this;
   }
 
   clone(obj) {
     this.hour = obj.hour;
     this.minute = obj.minute;
+    return this;
   }
 
   toString() {
@@ -656,5 +732,6 @@ class TimeCode {
 
   addMinutes(minutes) {
     this.decimalTime = this.decimalTime + minutes / 60;
+    return this; // Returning this allows for chaining of calls
   }
 }
