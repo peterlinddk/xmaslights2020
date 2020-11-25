@@ -122,7 +122,7 @@ function buildSVG() {
     if (h > 0 && h < 24) {
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
       text.classList.add("small");
-      text.setAttribute("x", h * hourWidth); // TODO: Find correct pixel-width
+      text.setAttribute("x", h * hourWidth);
       text.setAttribute("y", 20);
       text.textContent = `${h.toString().padStart(2, " ")}:00`;
       ruler.append(text);
@@ -387,9 +387,11 @@ const timespanEditor = {
       // hardcoded value to grab the beginning
       this.selectionType = "start";
       this.span.element.classList.add("resize");
+      this.span.element.classList.add("start");
     } else if (controlPoint > this.span.element.clientWidth - 8) {
       this.selectionType = "end";
       this.span.element.classList.add("resize");
+      this.span.element.classList.add("end");
     } else {
       this.selectionType = "move";
       this.span.element.classList.add("move");
@@ -402,6 +404,9 @@ const timespanEditor = {
 
     console.log(`Selected span `);
     console.log(this.span);
+
+    // console.log(`controlPoint @ ${controlPoint} = ${this.selectionType}`);
+
   },
   handleEvent(event) {
     // console.log(`Event type: ${event.type}`);
@@ -419,6 +424,8 @@ const timespanEditor = {
     console.log("Release");
     this.span.element.classList.remove("selected");
     this.span.element.classList.remove("resize");
+    this.span.element.classList.remove("end");
+    this.span.element.classList.remove("start");
     this.span.element.classList.remove("move");
     this.span.timeline.element.removeEventListener("mousemove", this);
     this.span.timeline.element.removeEventListener("mouseup", this);
@@ -452,13 +459,29 @@ const timespanEditor = {
       newEndTime.addMinutes(minutes);
     }
 
-    // TODO: Limit start and end times to within the 0-24
+    console.log(`New start time: ${newStartTime} - new end time: ${newEndTime}`);
 
-    // TODO: Combine times directly connected
+    let acceptChange = true;
 
-    this.span.start.timecode = newStartTime.timecode;
-    this.span.end.timecode = newEndTime.timecode;
-    this.span.position();
+    // Limit start and end times to within the 0-24
+    if (newStartTime.isBefore(new TimeCode("0:00")) || newEndTime.isAfter(new TimeCode("24:00"))) {
+      acceptChange = false;
+    }
+
+    // Prevent overlapping of previous or next
+    const previous = this.span.timeline.previous(this.span);
+    const next = this.span.timeline.next(this.span);
+    if (newStartTime.isBefore(previous?.end) || newEndTime.isAfter(next?.start)) {
+      acceptChange = false;
+    }
+
+    // TODO: Combine timespans directly connected!
+
+    if (acceptChange) {
+      this.span.start.timecode = newStartTime.timecode;
+      this.span.end.timecode = newEndTime.timecode;
+      this.span.position();
+    }
   },
 };
 
@@ -487,11 +510,37 @@ class TimeLine {
   constructor(timeline) {
     this.timespans = [];
 
-    // The timeline argument is only an array of timespans
+    // The timeline argument is simply an array of timespans
     this.timespans = timeline.map((span) => new TimeSpan(span, this));
+
+    // Sort the list of timespans!
+    this.timespans.sort((a, b) => a.start.compareWith(b.start));
+    
+    // Make sure no two timespans are overlapping
+    this.timespans.forEach((timeSpan, index) => {
+      const previous = this.timespans[index - 1];
+      if (timeSpan.start.isBefore(previous?.end)) {
+        console.warn(`Error in JSON - timespan: ${timeSpan} overlaps ${previous}`);
+        // Fix it by setting this.start = previous.end
+        timeSpan.start.timecode = previous.end.timecode;
+      }
+    });
 
     this.uuid = uuidv4();
   }
+
+  // returns the timespan before this one - or undefined if this is the first
+  previous(timeSpan) {
+    const index = this.timespans.indexOf(timeSpan);
+    return this.timespans[index - 1];
+  }
+
+  // returns the timespan after this one - or undefined if this is the last
+  next(timeSpan) {
+    const index = this.timespans.indexOf(timeSpan);
+    return this.timespans[index + 1];
+  }
+
 
   get width() {
     return this.element.clientWidth * zoomFactor;
@@ -524,6 +573,10 @@ class TimeSpan {
     const pixelWidth = this.end.hour * this.timeline.hourWidth + this.end.minute * this.timeline.minuteWidth - pixelStart;
     this.element.style.width = pixelWidth + "px";
   }
+
+  toString() {
+    return `<span start="${this.start}" end="${this.end}" uuid="${this.uuid}">`;
+  }
 }
 
 // Unique ID - from: https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid
@@ -552,6 +605,32 @@ class TimeCode {
 
   toString() {
     return this.timecode;
+  }
+
+  /* return 
+    -1 if this is before other
+    0 if they are the same
+    +1 if this is after other
+  */
+  compareWith(otherTimeCode) {
+    const hourDiff = this.hour - otherTimeCode.hour;
+    const minuteDiff = this.minute - otherTimeCode.minute;
+
+    if (hourDiff === 0) {
+      return minuteDiff;
+    } else {
+      return hourDiff;
+    }
+  }
+
+  // convenience method for compare 
+  isBefore(otherTimeCode) {
+    return otherTimeCode && this.compareWith(otherTimeCode) < 0;
+  }
+
+  // convenience method for compare 
+  isAfter(otherTimeCode) {
+    return otherTimeCode && this.compareWith(otherTimeCode) > 0;
   }
 
   get timecode() {

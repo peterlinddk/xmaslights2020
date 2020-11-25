@@ -24,6 +24,7 @@ body {
   width: 20vw; /* TODO: Set depending on width and height */
   height: 100%;
   background-color: yellow;
+  box-sizing: border-box;
 }
 
 .timeline span::before {
@@ -45,8 +46,16 @@ body {
   cursor: ew-resize;
 }
 
+.timeline span.selected.resize.start {
+  border-left: 2px solid red;
+}
+
+.timeline span.selected.resize.end {
+  border-right: 2px solid red;
+}
+
 .timeline span.selected.resize {
-  cursor: ew-resize;
+  /* cursor: ew-resize; */
 }
 
 .timeline span.selected.move {
