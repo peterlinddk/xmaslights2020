@@ -19,14 +19,17 @@ function handler(req, res) {
     console.log(`Filetype: ${filetype}`);
     switch (filetype) {
       case "html":
-        res.writeHead(200, { 'Content-Type': 'text/html' }); //write HTML
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' }); //write HTML
         break;
       case "css":
-        res.writeHead(200, { 'Content-Type': 'text/css' }); //write CSS
+        res.writeHead(200, { 'Content-Type': 'text/css; charset=UTF-8' }); //write CSS
         break;
       case "js":
-          res.writeHead(200, { 'Content-Type': 'text/javascript' }); //write JS
-          break;
+        res.writeHead(200, { 'Content-Type': 'text/javascript; charset=UTF-8' }); //write JS
+        break;
+      case "json":
+        res.writeHead(200, { 'Content-Type': 'application/json' }); //write JSON
+        break;
       default:
         res.writeHead(200, { 'Content-Type': 'text/plain' }); //write plain text
     }
