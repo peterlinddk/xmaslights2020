@@ -431,7 +431,7 @@ function createTimeSpan(event) {
 }
 
 
-// TODO: Make feature to delete timespan, to cut timespan into two, and to join two timespans into one
+// TODO: Make feature to cut timespan into two, and to join two timespans into one
 const timespanEditor = {
   select(event) {
     const element = event.currentTarget;
@@ -499,6 +499,12 @@ const timespanEditor = {
     this.span.timeline.element.removeEventListener("mouseup", this);
     this.span.timeline.element.removeEventListener("mouseleave", this);
 
+    // If the timespan was changed to start >= end, then delete the timespan!
+    if (this.span.start.compareWith(this.span.end) >= 0) {
+      this.span.delete();
+      document.querySelector("#popup").classList.remove("show");
+    }
+
     // forget about the selected element
     this.span = null;
   },
@@ -541,6 +547,14 @@ const timespanEditor = {
     const next = this.span.timeline.next(this.span);
     if (newStartTime.isBefore(previous?.end) || newEndTime.isAfter(next?.start)) {
       acceptChange = false;
+    }
+
+    // If start and end match or swap so the time is negative, it probably means that the user wants to delete!
+    if (newStartTime.compareWith(newEndTime) >= 0) {
+      // Only add the delete info - don't delete before the release
+      document.querySelector("#popup").classList.add("delete");
+    } else {
+      document.querySelector("#popup").classList.remove("delete");
     }
 
     // TODO: Combine timespans directly connected!
@@ -683,6 +697,12 @@ class TimeSpan {
 
     this.element = span;
     return span;
+  }
+
+  // removes this timespan from the timeline, and from the DOM
+  delete() {
+    this.element.remove();
+    this.timeline.timespans.splice(this.timeline.timespans.indexOf(this), 1);
   }
 
 }

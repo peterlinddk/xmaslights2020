@@ -30,6 +30,17 @@ body {
   opacity: 1;
 }
 
+#tracks #popup.delete {
+  background-color: rgb(190, 42, 42);
+  color: transparent;
+} 
+
+#tracks #popup.delete::before {
+  content: "Delete";
+  position: absolute;
+  color: pink;
+}
+
 .timeline {
   background-color: #aaa;
   position: relative;
