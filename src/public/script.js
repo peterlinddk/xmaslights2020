@@ -363,6 +363,7 @@ function getTimeSpanFromUuid(uuid) {
 }
 
 /* timeline edit */
+// TODO: Make feature to create new timespans - to cut timespan into two, and to join two timespans into one
 const timespanEditor = {
   select(event) {
     const element = event.currentTarget;
@@ -382,12 +383,12 @@ const timespanEditor = {
     // console.log(event);
     const controlPoint = event.layerX;
 
-    if (controlPoint < 16) {
+    if (controlPoint < 8) {
       // hardcoded value to grab the beginning
-      this.selectionType = "left";
+      this.selectionType = "start";
       this.span.element.classList.add("resize");
-    } else if (controlPoint > this.span.element.clientWidth - 16) {
-      this.selectionType = "right";
+    } else if (controlPoint > this.span.element.clientWidth - 8) {
+      this.selectionType = "end";
       this.span.element.classList.add("resize");
     } else {
       this.selectionType = "move";
@@ -430,21 +431,33 @@ const timespanEditor = {
     console.log("move");
 
     // find relative move-distance
-    const moveX = event.clientX;
-    const distance = moveX - this.startX;
-    // console.log(`Moved ${distance}`);
+    const distance = event.clientX - this.startX;
 
     // convert moved distance into minutes
     const minutes = distance / this.span.timeline.minuteWidth;
-    // console.log(`Minutes ${minutes}`);
+    
+    // TODO: Snap minutes to 0, 5, 15, 30
 
-    // TODO: Handle all different selectionTypes - not only start
+    // new TimeCodes has to be created from the initial start time on every edit, to avoid accumulating changes
+    const newStartTime = new TimeCode(this.initialStart);
+    const newEndTime = new TimeCode(this.initialEnd);
 
-    // new Time has to be created from the initial start time on every edit, to avoid accumulating changes
-    const newTime = new TimeCode(this.initialStart);
-    newTime.addMinutes(minutes);
+    // Handle the different selectionTypes - start, end and move
+    if (this.selectionType === "start") {
+      newStartTime.addMinutes(minutes);
+    } else if (this.selectionType === "end") {
+      newEndTime.addMinutes(minutes);
+    } else if (this.selectionType === "move") {
+      newStartTime.addMinutes(minutes);
+      newEndTime.addMinutes(minutes);
+    }
 
-    this.span.start.timecode = newTime.timecode;
+    // TODO: Limit start and end times to within the 0-24
+
+    // TODO: Combine times directly connected
+
+    this.span.start.timecode = newStartTime.timecode;
+    this.span.end.timecode = newEndTime.timecode;
     this.span.position();
   },
 };
