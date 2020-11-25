@@ -26,6 +26,25 @@ body {
   background-color: yellow;
 }
 
+.timeline span::before {
+  content: "";
+  position: absolute;
+  /* background-color: red; */
+  height: 100%;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.timeline span::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  /* background-color: green; */
+  height: 100%;
+  width: 8px;
+  cursor: ew-resize;
+}
+
 .timeline span.selected.resize {
   cursor: ew-resize;
 }

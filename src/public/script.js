@@ -381,7 +381,7 @@ const timespanEditor = {
 
     // Figure out if it was selected for moving, expanding left or right
     // console.log(event);
-    const controlPoint = event.layerX;
+    const controlPoint = event.clientX - this.span.element.getBoundingClientRect().left;
 
     if (controlPoint < 8) {
       // hardcoded value to grab the beginning
