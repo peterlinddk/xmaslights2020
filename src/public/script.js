@@ -408,8 +408,11 @@ function showTimeSpanInfo(event) {
   timeSpan.element.addEventListener("mouseleave", hideTimeSpanInfo);
 
   function hideTimeSpanInfo(event) {
-    popup.classList.remove("show");
-    timeSpan.element.removeEventListener("mouseleave", hideTimeSpanInfo);
+    // only hide if the class isn't delete! - otherwise keep it until the user releases the button
+    if (!popup.classList.contains("delete")) {
+      popup.classList.remove("show");
+      timeSpan.element.removeEventListener("mouseleave", hideTimeSpanInfo);
+    }
   }
 
   // show popup
@@ -422,9 +425,11 @@ function updatePopup(timeSpan) {
   popup.querySelector("#end-time").textContent = timeSpan.end;
 }
 
+let preventCreate = false;
+
 function createTimeSpan(event) {
   // Only create a new timespan if clicked on empty part of the timeline
-  if (event.target.classList.contains("timeline")) {
+  if (event.target.classList.contains("timeline") && !preventCreate) {
     console.log("Create new TimeSpan here");
     console.log(event);
 
@@ -506,7 +511,7 @@ const timespanEditor = {
     console.log(this.span);
 
     // console.log(`controlPoint @ ${controlPoint} = ${this.selectionType}`);
-
+    preventCreate = true;
   },
   handleEvent(event) {
     // console.log(`Event type: ${event.type}`);
@@ -535,10 +540,17 @@ const timespanEditor = {
     if (this.span.start.compareWith(this.span.end) >= 0) {
       this.span.delete();
       document.querySelector("#popup").classList.remove("show");
+      document.querySelector("#popup").classList.remove("delete");
     }
 
     // forget about the selected element
     this.span = null;
+
+    // wait 400 ms before allowing the user to create a new timespan
+    // this prevents "slipping" on the mouse-button when dragging or deleting
+    setTimeout(function () {
+      preventCreate = false;
+    }, 400);
   },
   move(event) {
     console.log("move");
