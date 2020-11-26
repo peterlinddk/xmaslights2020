@@ -25,11 +25,23 @@ async function loadSequence() {
 }
 
 function exportSequence() {
-  const data = sequence.export();
-  const json = JSON.stringify(data);
+  const json = JSON.stringify(sequence.export());
 
   console.log("Export: " + json);
   // TODO: Send json to server, using fetch
+  fetch("/", {
+    method: "post",
+    body: json,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log("Received data:");
+      console.log(data);
+  })
 
 }
 
