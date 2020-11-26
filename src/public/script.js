@@ -838,8 +838,14 @@ class TimeCode {
   }
 
   set decimalTime(dtime) {
-    const hour = Math.floor(dtime);
-    const minute = Math.round((dtime - hour) * 60);
+    let hour = Math.floor(dtime);
+    // round up, to allow for half minutes to be turned into whole minutes
+    let minute = Math.round((dtime - hour) * 60);
+    // if rounding causes too large number of minutes, move into the next hour
+    if (minute > 59) {
+      minute -= 60;
+      hour++;
+    }
     this.hour = hour;
     this.minute = minute;
   }
