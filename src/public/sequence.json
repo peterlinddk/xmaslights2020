@@ -1,1 +1,187 @@
-{"tracks":[{"name":"Juletræ - indgang","port":4,"on":1,"timeline":[{"start":"0:01","end":"2:60"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"5:45"}]},{"name":"Julemand - væg","port":17,"on":1,"timeline":[{"start":"1:00","end":"2:00"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"6:00"},{"start":"6:15","end":"6:30"}]},{"name":"Juletræ - have","port":27,"on":1,"timeline":[{"start":"17:00","end":"18:00"},{"start":"19:00","end":"20:00"},{"start":"21:00","end":"22:00"},{"start":"23:00","end":"24:00"}]},{"name":"Lyskæde - gavl","port":22,"on":1,"timeline":[{"start":"3:00","end":"4:00"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"6:00"},{"start":"6:15","end":"6:30"}]},{"name":"Lyskæde - carport","port":24,"on":1,"timeline":[{"start":"0:00","end":"3:00"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"5:45"},{"start":"6:15","end":"6:30"}]},{"name":"Lyskæde - husside","port":23,"on":1,"timeline":[{"start":"0:00","end":"3:00"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"5:45"},{"start":"6:15","end":"6:30"}]},{"name":"Dansenisser","port":18,"on":1,"timeline":[{"start":"0:00","end":"3:00"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"5:45"},{"start":"6:15","end":"6:30"}]},{"name":"Stars","port":25,"on":1,"timeline":[{"start":"1:15","end":"3:00"},{"start":"4:00","end":"5:00"},{"start":"5:30","end":"5:45"},{"start":"6:15","end":"7:30"}]}]}
+{
+  "tracks": [
+    {
+      "name": "Juletræ - indgang",
+      "port": 4,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "0:30",
+          "end": "3:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "5:45"
+        }
+      ]
+    },
+    {
+      "name": "Julemand - væg",
+      "port": 17,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "1:00",
+          "end": "2:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "6:00"
+        },
+        {
+          "start": "6:15",
+          "end": "6:30"
+        }
+      ]
+    },
+    {
+      "name": "Juletræ - have",
+      "port": 27,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "17:00",
+          "end": "18:00"
+        },
+        {
+          "start": "19:00",
+          "end": "20:00"
+        },
+        {
+          "start": "21:00",
+          "end": "22:00"
+        },
+        {
+          "start": "23:00",
+          "end": "24:00"
+        }
+      ]
+    },
+
+    {
+      "name": "Lyskæde - gavl",
+      "port": 22,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "3:00",
+          "end": "4:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "6:00"
+        },
+        {
+          "start": "6:15",
+          "end": "6:30"
+        }
+      ]
+    },
+
+    {
+      "name": "Lyskæde - carport",
+      "port": 24,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "0:00",
+          "end": "3:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "5:45"
+        },
+        {
+          "start": "6:15",
+          "end": "6:30"
+        }
+      ]
+    },
+
+    {
+      "name": "Lyskæde - husside",
+      "port": 23,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "0:00",
+          "end": "3:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "5:45"
+        },
+        {
+          "start": "6:15",
+          "end": "6:30"
+        }
+      ]
+    },
+    {
+      "name": "Dansenisser",
+      "port": 18,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "0:00",
+          "end": "3:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "5:45"
+        },
+        {
+          "start": "6:15",
+          "end": "6:30"
+        }
+      ]
+    },
+    {
+      "name": "Stars",
+      "port": 25,
+      "on": 1,
+      "timeline": [
+        {
+          "start": "1:15",
+          "end": "3:00"
+        },
+        {
+          "start": "4:00",
+          "end": "5:00"
+        },
+        {
+          "start": "5:30",
+          "end": "5:45"
+        },
+        {
+          "start": "6:15",
+          "end": "7:30"
+        }
+      ]
+    }
+  ]
+}
