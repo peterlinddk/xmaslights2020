@@ -584,6 +584,8 @@ class Sequence {
 class Track {
   constructor(track) {
     this.name = track.name;
+    this.port = track.port;
+    this.on = track.on;
     this.timeline = new TimeLine(track.timeline);
   }
 }
