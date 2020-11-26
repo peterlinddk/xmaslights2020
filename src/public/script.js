@@ -374,12 +374,20 @@ function getTimeSpanFromUuid(uuid) {
 function showTimeSpanInfo(event) {
   // find timespan object
   const timeSpan = getTimeSpanFromUuid(event.target.dataset.uuid);
-  
+  const timeLineElement = timeSpan.element.parentElement;  
   // find popup
   const popup = document.querySelector("#popup");
 
   // position popup
-  popup.style.left = event.clientX - popup.getBoundingClientRect().width / 2 + "px";
+  let left = event.clientX - popup.getBoundingClientRect().width / 2
+
+  // if positioned too far to the right - move it in
+  if (left > timeLineElement.clientWidth + timeLineElement.offsetLeft - 70) { 
+    left = timeLineElement.clientWidth + timeLineElement.offsetLeft - 70;
+    // 70 pixels is the hardcoded approximate width of the popup - it has display none, and thus 0 width until displayed!
+  }
+
+  popup.style.left = left + "px";
   popup.style.top = timeSpan.element.parentElement.offsetTop - 20 + "px";
 
   // Write info in popup
