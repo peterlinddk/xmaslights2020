@@ -24,6 +24,15 @@ async function loadSequence() {
   return objseq;
 }
 
+function exportSequence() {
+  const data = sequence.export();
+  const json = JSON.stringify(data);
+
+  console.log("Export: " + json);
+  // TODO: Send json to server, using fetch
+
+}
+
 function buildSequence() {
   console.log("Build sequence");
   console.log(sequence);
@@ -163,6 +172,9 @@ function performAction(event) {
 
   console.log(`Do action: ${action}`);
   switch (action) {
+    case "export":
+      exportSequence();
+      break;
     case "zoom_in":
       // zoomIn();
       break;
@@ -574,6 +586,12 @@ class Sequence {
     this.tracks = [];
   }
 
+  export() {
+    return {
+      tracks: this.tracks.map(track => track.export())
+    }
+  }
+
   addTrack(track) {
     const objtrack = new Track(track);
     objtrack.index = this.tracks.length;
@@ -587,6 +605,15 @@ class Track {
     this.port = track.port;
     this.on = track.on;
     this.timeline = new TimeLine(track.timeline);
+  }
+
+  export() {
+    return {
+      name: this.name,
+      port: this.port,
+      on: this.on,
+      timeline: this.timeline.export()
+    }
   }
 }
 
@@ -612,6 +639,10 @@ class TimeLine {
     });
 
     this.uuid = uuidv4();
+  }
+
+  export() {
+    return this.timespans.map(timespan => timespan.export() );
   }
 
   // returns the timespan before this one - or undefined if this is the first
@@ -677,6 +708,13 @@ class TimeSpan {
     this.start = new TimeCode(span.start);
     this.end = new TimeCode(span.end);
     this.uuid = uuidv4();
+  }
+
+  export() {
+    return {
+      start: this.start.timecode,
+      end: this.end.timecode
+    }
   }
 
   position() {
