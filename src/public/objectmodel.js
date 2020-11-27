@@ -29,6 +29,7 @@ class Track {
     this.port = track.port;
     this.on = track.on;
     this.timeline = new TimeLine(track.timeline);
+    this.timeline.track = this;
   }
 
   export() {
@@ -229,6 +230,10 @@ class TimeCode {
   // convenience method for compare 
   isAfter(otherTimeCode) {
     return otherTimeCode && this.compareWith(otherTimeCode) > 0;
+  }
+
+  equals(otherTimeCode) {
+    return this.hour === otherTimeCode.hour && this.minute === otherTimeCode.minute;
   }
 
   get timecode() {
