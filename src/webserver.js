@@ -1,9 +1,15 @@
-var http = require("http").createServer(handler); //require http server, and create server with function handler()
-var fs = require("fs"); //require filesystem module
+"use strict";
+import http from "http"; // http is the server
+import fs from "fs"; // require filesystem module
+import path from 'path'; // need path to get __dirname
 
-http.listen(8080); //listen to port 8080
+const server = http.createServer(handler); //require http server, and create server with function handler()
+server.listen(8080); //listen to port 8080
+
+const __dirname = `${path.resolve()}/src`;
 
 function handler(req, res) {
+  
   let url = req.url;
 
   if (req.method === "POST") {

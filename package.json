@@ -1,0 +1,23 @@
+{
+  "name": "xmaslights2020",
+  "version": "1.0.0",
+  "description": "Front and Back-end for xmaslights control",
+  "main": "webserver.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node --experimental-modules src/webserver.js",
+    "player": "node --experimental-modules src/player.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peterlinddk/xmaslights2020.git"
+  },
+  "author": "Peter Lind",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/peterlinddk/xmaslights2020/issues"
+  },
+  "homepage": "https://github.com/peterlinddk/xmaslights2020#readme",
+  "dependencies": {}
+}
