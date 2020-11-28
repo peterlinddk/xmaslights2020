@@ -105,10 +105,19 @@ class Player {
     }
   }
 
+  addEventListener(eventtype, callback) {
+    if (eventtype === "timeupdate") { // only "event" supported so far
+      this.timeupdateListener = callback;
+    }
+  }
 
   updateCurrentTime() {
     // TODO: Maybe more intelligently than this - e.g. actually look at the time!
     this.currentTime.addMinutes(1);
+
+    if (this.timeupdateListener) {
+      this.timeupdateListener(this.currentTime);
+    }
 
   }
 

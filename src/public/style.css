@@ -28,6 +28,41 @@ body {
   white-space: nowrap;
 }
 
+#tracks #cursors {
+  grid-column: 2 / 3;
+  /* TODO: Rows need to be all tracks + time + what? */
+  grid-row: 1 / 10;
+  position: absolute;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+#cursors #playcursor {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 1px;
+  height: 230px;
+  background-color: red;
+  z-index: 3;
+  transition: transform .8s ease-in;
+}
+
+.playing {
+  box-shadow: 0 0px 15px 1px rgba(227,70,70,.5);
+  animation: pulsate 1s ease-in-out infinite alternate;
+}
+  
+@keyframes pulsate {
+  from {
+    background-color: rgb(243, 124, 124);
+  }
+  to {
+    background-color: rgb(146, 25, 25);
+ }
+}
+
 #tracks #popup.show {
   opacity: 1;
   display: block;

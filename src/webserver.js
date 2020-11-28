@@ -101,9 +101,16 @@ player.loadSequence();  // TODO: Make player configurable to re-load the sequenc
 // Listen for play-state changes from the client - starts and stops the player
 io.sockets.on("connection", function (socket) {
   socket.on("play-state", function (data) {
+
+    // update player currentTime
+    function updatePlayerTime(time) { // TODO: Maybe get actual event here ...
+      socket.emit("play-time", time.timecode)
+    }
+
     console.log(`Playing: ${data}`);
     if (data === "play") {
       player.play();
+      player.addEventListener("timeupdate", updatePlayerTime);
 
       // send play-state back to the client
       socket.emit("play-state", "playing");
@@ -113,6 +120,8 @@ io.sockets.on("connection", function (socket) {
 
       // send play-state (paused) back to the client
       socket.emit("play-state", "paused");
-    }    
+    }
   })
-})
+});
+
+

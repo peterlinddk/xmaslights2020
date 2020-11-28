@@ -46,6 +46,8 @@ function exportSequence() {
 
 /* Player controls */
 
+let currentPlayerTime = new TimeCode("0:00");
+
 function playSequence() {
   socket.emit("play-state", "play");
 }
@@ -54,15 +56,37 @@ function pauseSequence() {
   socket.emit("play-state", "pause");
 }
 
-function receivePlayerData(data) {
+function receivePlayerState(data) {
   console.log("Received play-state: " + data);
   const playButton = document.querySelector("[data-action='play']");
+  const playCursor = document.querySelector("#playcursor");
   playButton.dataset.state = data;
   if (data === "playing") {
     playButton.textContent = "Pause";
+    playCursor.classList.add("playing");
   } else {
     playButton.textContent = "Play";
+    playCursor.classList.remove("playing");
   }
+}
+
+function receivePlayerTime(data) {
+  console.log("Received player-time: " + data);
+  currentPlayerTime.timecode = data;
+  positionPlayCursor();
+
+}
+
+function positionPlayCursor() {
+  const cursor = document.querySelector("#playcursor");
+
+  const hour = currentPlayerTime.hour;
+  const minute = currentPlayerTime.minute;
+
+  // Get first timeline in sequence
+  const timeline = sequence.tracks[0].timeline;
+  const pixelStart = hour * timeline.hourWidth + minute * timeline.minuteWidth;
+  cursor.style.transform = `translate(${pixelStart - timeline.offset}px, 0)`;
 }
 
 function buildSequence() {
@@ -126,7 +150,8 @@ function loaded() {
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
 
   // receive socket updates
-  socket.on("play-state", receivePlayerData);
+  socket.on("play-state", receivePlayerState);
+  socket.on("play-time", receivePlayerTime);
 }
 
 function resize() {
@@ -138,6 +163,7 @@ function resize() {
 function redraw() {
   buildSVG();
   positionSpans();
+  positionPlayCursor();
 }
 
 function buildSVG() {
@@ -213,7 +239,6 @@ function performAction(event) {
       exportSequence();
       break;
     case "play":
-      console.log(target);
       if (target.dataset.state === "paused") {
         playSequence();
       } else {
