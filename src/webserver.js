@@ -2,9 +2,15 @@
 import http from "http"; // http is the server
 import fs from "fs"; // require filesystem module
 import path from 'path'; // need path to get __dirname
+import { Server } from 'socket.io';
+import { Player } from "./player.js";
 
-const server = http.createServer(handler); //require http server, and create server with function handler()
+
+const server = http.createServer(handler); // Create HTTP server that calls the function 'handler' on requests
 server.listen(8080); //listen to port 8080
+
+// Create socket.io for the same server ...
+const io = new Server(server);
 
 const __dirname = `${path.resolve()}/src`;
 
@@ -88,3 +94,25 @@ function handler(req, res) {
     });
   }
 }
+
+const player = new Player();
+player.loadSequence();  // TODO: Make player configurable to re-load the sequence when asked (or when re-exported)
+
+// Listen for play-state changes from the client - starts and stops the player
+io.sockets.on("connection", function (socket) {
+  socket.on("play-state", function (data) {
+    console.log(`Playing: ${data}`);
+    if (data === "play") {
+      player.play();
+
+      // send play-state back to the client
+      socket.emit("play-state", "playing");
+
+    } else if (data === "pause") {
+      player.pause();
+
+      // send play-state (paused) back to the client
+      socket.emit("play-state", "paused");
+    }    
+  })
+})

@@ -19,5 +19,7 @@
     "url": "https://github.com/peterlinddk/xmaslights2020/issues"
   },
   "homepage": "https://github.com/peterlinddk/xmaslights2020#readme",
-  "dependencies": {}
+  "dependencies": {
+    "socket.io": "^3.0.3"
+  }
 }

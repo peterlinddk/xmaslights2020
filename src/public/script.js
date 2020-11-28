@@ -5,6 +5,7 @@ import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from './objectmodel.js'
 window.addEventListener("DOMContentLoaded", start);
 
 let sequence = null;
+let socket = io();
 
 async function start() {
   console.log("Start");
@@ -41,6 +42,27 @@ function exportSequence() {
       console.log(data);
   })
 
+}
+
+/* Player controls */
+
+function playSequence() {
+  socket.emit("play-state", "play");
+}
+
+function pauseSequence() {
+  socket.emit("play-state", "pause");
+}
+
+function receivePlayerData(data) {
+  console.log("Received play-state: " + data);
+  const playButton = document.querySelector("[data-action='play']");
+  playButton.dataset.state = data;
+  if (data === "playing") {
+    playButton.textContent = "Pause";
+  } else {
+    playButton.textContent = "Play";
+  }
 }
 
 function buildSequence() {
@@ -102,6 +124,9 @@ function loaded() {
 
   // add other button actions (none implemented at the moment)
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
+
+  // receive socket updates
+  socket.on("play-state", receivePlayerData);
 }
 
 function resize() {
@@ -174,25 +199,29 @@ function positionSpans() {
 function performAction(event) {
   // find action to perform
   let target = event.target;
-  let action;
-
+  
   // Find the actual action - the target might be a child of the element with the action
+  let action = target.dataset.action;
   while (!action) {
-    action = target.dataset.action;
     target = target.parentElement;
+    action = target.dataset.action;
   }
 
-  console.log(`Do action: ${action}`);
+  // console.log(`Do action: ${action}`);
   switch (action) {
     case "export":
       exportSequence();
       break;
-    case "zoom_in":
-      // zoomIn();
+    case "play":
+      console.log(target);
+      if (target.dataset.state === "paused") {
+        playSequence();
+      } else {
+        pauseSequence();
+      }
       break;
-    case "zoom_out":
-      // zoomOut();
-      break;
+    default:
+      console.warn(`Unknown action: ${action}`);
   }
 }
 

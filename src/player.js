@@ -2,6 +2,7 @@
 import path from 'path';
 import fs from "fs";
 import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from './public/objectmodel.js';
+export { Player };
 
 // This is the player, intended to run on the server
 // It runs continually, loads the sequence from sequence.json, and plays through it, using the date-time
@@ -9,6 +10,7 @@ class Player {
 
   constructor() {
     this.currentTime = new TimeCode("0:00");
+    this.paused = true;
   }
 
   loadSequence( callback ) {
@@ -58,29 +60,31 @@ class Player {
   }
 
   tick() {
-    process.stdout.cursorTo(0);
-    process.stdout.write(`tick @ ${this.currentTime}  `);
+    if (!this.paused) {
+      process.stdout.cursorTo(0);
+      process.stdout.write(`tick @ ${this.currentTime}  `);
 
-    let next = this.nextInQueue();
-    // console.log(`next @ ${next.time}`);
-    let firstProcess = true;
-    while (this.currentTime.compareWith(next.time) >= 0) {
-      if (firstProcess) {
-        console.log("");
-        firstProcess = false;
+      let next = this.nextInQueue();
+      // console.log(`next @ ${next.time}`);
+      let firstProcess = true;
+      while (this.currentTime.compareWith(next.time) >= 0) {
+        if (firstProcess) {
+          console.log("");
+          firstProcess = false;
+        }
+        // process next event
+        this.processEvent(next);
+
+        // move it out of the queue
+        this.moveQueue();
+        // and repeat
+        next = this.nextInQueue();
       }
-      // process next event
-      this.processEvent(next);
-
-      // move it out of the queue
-      this.moveQueue();
-      // and repeat
-      next = this.nextInQueue();
-    }
-    const timeToNextTick = 500;
-    this.updateCurrentTime(); // TODO: Make update return timeToNextTick
+      const timeToNextTick = 500;
+      this.updateCurrentTime(); // TODO: Make update return timeToNextTick
     
-    setTimeout(this.tick.bind(this), timeToNextTick);
+      this.timeout = setTimeout(this.tick.bind(this), timeToNextTick);
+    }
   }
 
   processEvent(event) {
@@ -101,12 +105,26 @@ class Player {
     }
   }
 
+
   updateCurrentTime() {
     // TODO: Maybe more intelligently than this - e.g. actually look at the time!
     this.currentTime.addMinutes(1);
 
   }
 
+  /*
+    TODO: Make queue use pointer instead of moving events around ...
+
+    TODO: Make method for setting currentTime, but retaining whatever state the lights would be in at that time - that means
+    for each track: find the last event before currentTime, and set track-status to that. (problem with circular queue - maybe a queue pointer is better!)
+    
+    TODO: Make player actually set GPIO pins from tracks - also requires better test-sequence.
+
+    TODO: Make player use actual time
+
+    TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+  */
+  
   // sets the current time to timecode - and removes everything in the queue before that time (ignoring the state of each track)
   setCurrentTime(timecode) {
     for (let i = 0; i < this.queue.length; i++) {
@@ -114,21 +132,31 @@ class Player {
     }
   }
 
-  start() {
-    console.log("Started");
+  play() {
+    console.log("Playing");
+
+    // Only start playing if paused ...
+    if (this.paused) {
+      this.paused = false;
+      this.tick();
+    }
     
-//    console.log(this.sequence);
-//    console.log("Queue:");
-//    console.log(this.queue);
-    this.tick();
+  }
+
+  pause() {
+    console.log("Paused");
+    this.paused = true;
+    clearTimeout(this.timeout);
   }
 
 }
 
 // testing
+/*
 const player = new Player();
 player.loadSequence(start);
 
 function start() {
   player.start();
 }
+*/
