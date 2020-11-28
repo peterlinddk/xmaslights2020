@@ -560,11 +560,29 @@ const timespanEditor = {
     const distanceToPrevious = (previous.decimalTime - this.initialStart.decimalTime)*60;
     const distanceToNext = (next.decimalTime - this.initialEnd.decimalTime)*60;
 
-    // console.log(`Move ${minutes} minutes`);
+    console.log(`Try to move ${minutes} minutes`);
     // console.log(`Distance to previous: ${distanceToPrevious} minutes`);
     // console.log(`Distance to next: ${distanceToNext} minutes`);
 
     // TODO: Snap minutes to 0, 5, 15, 30
+    // Find offset (time that is being moved)
+    let offset = this.initialStart.decimalTime * 60;
+    if (this.selectionType === "end") {
+      offset = this.initialEnd.decimalTime * 60;
+    }
+
+    // TODO: Let this snap be dependent on how far the user moves - if moving less than two minutes, don't snap to five, otherwise snap cleaner!
+    let moveTo = offset + minutes;
+    // This is the time-code we are moving to
+    // - if moveTo is closer to 0 or 5 than 4 or 6, -1 or 1, snap to five
+    if ( moveTo%5 < 1 || moveTo%5 > 4 ) {
+      // snap to five!
+      moveTo = moveTo - moveTo % 5 + (moveTo % 5 > 2.5 ? 5 : 0);
+      console.log(`no: move to ${moveTo}`);
+    }
+    minutes = moveTo - offset;
+    console.log(`Actually move ${minutes} minutes`);
+
 
     // clamp/limit minutes to min distancetoPrevious or max distanceToNext
     if (minutes < distanceToPrevious) {
@@ -588,7 +606,7 @@ const timespanEditor = {
       newEndTime.addMinutes(minutes);
     }
 
-    console.log(`New start time: ${newStartTime} - new end time: ${newEndTime}`);
+    // console.log(`New start time: ${newStartTime} - new end time: ${newEndTime}`);
 
     // If start and end match or swap so the time is negative, it probably means that the user wants to delete!
     if (newStartTime.compareWith(newEndTime) >= 0) {
