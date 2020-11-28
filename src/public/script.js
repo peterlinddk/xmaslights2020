@@ -551,9 +551,28 @@ const timespanEditor = {
     const distance = event.clientX - this.startX;
 
     // convert moved distance into minutes
-    const minutes = distance / this.span.timeline.minuteWidth;
+    let minutes = distance / this.span.timeline.minuteWidth;
     
+    // Prevent overlapping of previous or next
+    const previous = this.span.timeline.previous(this.span)?.end ?? new TimeCode("0:00");
+    const next = this.span.timeline.next(this.span)?.start ?? new TimeCode("24:00");
+
+    const distanceToPrevious = (previous.decimalTime - this.initialStart.decimalTime)*60;
+    const distanceToNext = (next.decimalTime - this.initialEnd.decimalTime)*60;
+
+    // console.log(`Move ${minutes} minutes`);
+    // console.log(`Distance to previous: ${distanceToPrevious} minutes`);
+    // console.log(`Distance to next: ${distanceToNext} minutes`);
+
     // TODO: Snap minutes to 0, 5, 15, 30
+
+    // clamp/limit minutes to min distancetoPrevious or max distanceToNext
+    if (minutes < distanceToPrevious) {
+      minutes = distanceToPrevious;
+    }
+    if (minutes > distanceToNext) {
+      minutes = distanceToNext;
+    }
 
     // new TimeCodes has to be created from the initial start time on every edit, to avoid accumulating changes
     const newStartTime = new TimeCode(this.initialStart);
@@ -571,20 +590,6 @@ const timespanEditor = {
 
     console.log(`New start time: ${newStartTime} - new end time: ${newEndTime}`);
 
-    let acceptChange = true;
-
-    // Limit start and end times to within the 0-24
-    if (newStartTime.isBefore(new TimeCode("0:00")) || newEndTime.isAfter(new TimeCode("24:00"))) {
-      acceptChange = false;
-    }
-
-    // Prevent overlapping of previous or next
-    const previous = this.span.timeline.previous(this.span);
-    const next = this.span.timeline.next(this.span);
-    if (newStartTime.isBefore(previous?.end) || newEndTime.isAfter(next?.start)) {
-      acceptChange = false;
-    }
-
     // If start and end match or swap so the time is negative, it probably means that the user wants to delete!
     if (newStartTime.compareWith(newEndTime) >= 0) {
       // Only add the delete info - don't delete before the release
@@ -595,12 +600,12 @@ const timespanEditor = {
 
     // TODO: Combine timespans directly connected!
 
-    if (acceptChange) {
-      this.span.start.timecode = newStartTime.timecode;
-      this.span.end.timecode = newEndTime.timecode;
-      this.span.position();
-      updatePopup(this.span);
-    }
+
+    this.span.start.timecode = newStartTime.timecode;
+    this.span.end.timecode = newEndTime.timecode;
+    this.span.position();
+    updatePopup(this.span);
+
   },
 };
 
