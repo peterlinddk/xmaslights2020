@@ -26,7 +26,7 @@ function exportSequence() {
   const json = JSON.stringify(sequence.export());
 
   console.log("Export: " + json);
-  // TODO: Send json to server, using fetch
+  // Send json to server, using fetch
   fetch("/", {
     method: "post",
     body: json,
@@ -422,8 +422,8 @@ let preventCreate = false;
 function createTimeSpan(event) {
   // Only create a new timespan if clicked on empty part of the timeline
   if (event.target.classList.contains("timeline") && !preventCreate) {
-    console.log("Create new TimeSpan here");
-    console.log(event);
+    // console.log("Create new TimeSpan here");
+    // console.log(event);
 
     // Find the timeline object
     const timeline = sequence.tracks.find(track => track.timeline.uuid === event.target.dataset.uuid).timeline;
@@ -436,7 +436,7 @@ function createTimeSpan(event) {
     const clickTime = new TimeCode("0:00");
     clickTime.addMinutes(minutes);
 
-    console.log(`Click på ${clickPoint} @ ${clickTime}`);
+    // console.log(`Click on ${clickPoint} @ ${clickTime}`);
     // Create new TimeSpan object with starttime at this, and endtime 15 minutes later (always a width of 15 minutes for new timespans)
     const timeSpan = new TimeSpan({ start: clickTime.timecode, end: clickTime.addMinutes(15).timecode }, timeline);
     
@@ -499,8 +499,8 @@ const timespanEditor = {
     this.initialStart = new TimeCode(this.span.start);
     this.initialEnd = new TimeCode(this.span.end);
 
-    console.log(`Selected span `);
-    console.log(this.span);
+    // console.log(`Selected span `);
+    // console.log(this.span);
 
     // console.log(`controlPoint @ ${controlPoint} = ${this.selectionType}`);
     preventCreate = true;
@@ -518,7 +518,7 @@ const timespanEditor = {
     }
   },
   release(event) {
-    console.log("Release");
+    // console.log("Release");
     this.span.element.classList.remove("selected");
     this.span.element.classList.remove("resize");
     this.span.element.classList.remove("end");
@@ -545,7 +545,7 @@ const timespanEditor = {
     }, 400);
   },
   move(event) {
-    console.log("move");
+    // console.log("move");
 
     // find relative move-distance
     const pixels = event.clientX - this.startX;
