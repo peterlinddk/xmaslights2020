@@ -548,10 +548,16 @@ const timespanEditor = {
     console.log("move");
 
     // find relative move-distance
-    const distance = event.clientX - this.startX;
+    const pixels = event.clientX - this.startX;
 
     // convert moved distance into minutes
-    let minutes = distance / this.span.timeline.minuteWidth;
+    let moveDistance = pixels / this.span.timeline.minuteWidth;
+    // only update lastMoveDistance every 400ms - so if the user moves slowly, the adjustment is more precise
+    const now = performance.now();
+    if (now - 400 > this.lastMove || !this.lastMove) {
+      this.lastMoveDistance = moveDistance;
+      this.lastMove = now;      
+    }
     
     // Prevent overlapping of previous or next
     const previous = this.span.timeline.previous(this.span)?.end ?? new TimeCode("0:00");
@@ -560,50 +566,59 @@ const timespanEditor = {
     const distanceToPrevious = (previous.decimalTime - this.initialStart.decimalTime)*60;
     const distanceToNext = (next.decimalTime - this.initialEnd.decimalTime)*60;
 
-    console.log(`Try to move ${minutes} minutes`);
+    // console.log(`Try to move ${moveDistance} minutes (adjustment:${adjustment})`);
     // console.log(`Distance to previous: ${distanceToPrevious} minutes`);
     // console.log(`Distance to next: ${distanceToNext} minutes`);
 
-    // TODO: Snap minutes to 0, 5, 15, 30
-    // Find offset (time that is being moved)
+    // Find offset (the initial value of the timespan (start or end) that is being moved)
     let offset = this.initialStart.decimalTime * 60;
     if (this.selectionType === "end") {
       offset = this.initialEnd.decimalTime * 60;
     }
+    
+    let moveTo = offset + moveDistance;
 
-    // TODO: Let this snap be dependent on how far the user moves - if moving less than two minutes, don't snap to five, otherwise snap cleaner!
-    let moveTo = offset + minutes;
-    // This is the time-code we are moving to
-    // - if moveTo is closer to 0 or 5 than 4 or 6, -1 or 1, snap to five
-    if ( moveTo%5 < 1 || moveTo%5 > 4 ) {
-      // snap to five!
+    const adjustment = Math.abs(moveDistance - (this.lastMoveDistance ?? 0));
+    // The snap is dependent on how far the user moves
+    // - adjusting more than 10 minutes, snap to increments of 15 minutes
+    // - adjusting more than 3 minutes, snap to increments of 5 minutes
+    // - anything less, doesn't really snap, but adjusts easier to increments of 5, than next to.
+    if (adjustment > 10) {
+      // Snap to fifteen!
+      moveTo = moveTo - moveTo % 15 + (moveTo % 15 > 7.5 ? 15 : 0);
+    } else if (adjustment > 3) {
+      // Snap to five!
       moveTo = moveTo - moveTo % 5 + (moveTo % 5 > 2.5 ? 5 : 0);
-      console.log(`no: move to ${moveTo}`);
+    } else {
+      // fine adjustment, only snap on < 1 and > 4
+      // - if moveTo is closer to 0 or 5 than 4 or 6, -1 or 1, snap to five (or 0)
+      if (moveTo % 5 < 1 || moveTo % 5 > 4) {
+        // snap to five!
+        moveTo = moveTo - moveTo % 5 + (moveTo % 5 > 2.5 ? 5 : 0);
+      }
     }
-    minutes = moveTo - offset;
-    console.log(`Actually move ${minutes} minutes`);
-
-
-    // clamp/limit minutes to min distancetoPrevious or max distanceToNext
-    if (minutes < distanceToPrevious) {
-      minutes = distanceToPrevious;
+    moveDistance = moveTo - offset;
+    
+    // clamp/limit minutes to min distancetoPrevious or max distanceToNext - depending on which part of the timespan is edited
+    if ( this.selectionType !== "end" && moveDistance < distanceToPrevious) {
+      moveDistance = distanceToPrevious;
     }
-    if (minutes > distanceToNext) {
-      minutes = distanceToNext;
+    if ( this.selectionType !== "start" && moveDistance > distanceToNext) {
+      moveDistance = distanceToNext;
     }
-
+    
     // new TimeCodes has to be created from the initial start time on every edit, to avoid accumulating changes
     const newStartTime = new TimeCode(this.initialStart);
     const newEndTime = new TimeCode(this.initialEnd);
 
     // Handle the different selectionTypes - start, end and move
     if (this.selectionType === "start") {
-      newStartTime.addMinutes(minutes);
+      newStartTime.addMinutes(moveDistance);
     } else if (this.selectionType === "end") {
-      newEndTime.addMinutes(minutes);
+      newEndTime.addMinutes(moveDistance);
     } else if (this.selectionType === "move") {
-      newStartTime.addMinutes(minutes);
-      newEndTime.addMinutes(minutes);
+      newStartTime.addMinutes(moveDistance);
+      newEndTime.addMinutes(moveDistance);
     }
 
     // console.log(`New start time: ${newStartTime} - new end time: ${newEndTime}`);
@@ -617,7 +632,6 @@ const timespanEditor = {
     }
 
     // TODO: Combine timespans directly connected!
-
 
     this.span.start.timecode = newStartTime.timecode;
     this.span.end.timecode = newEndTime.timecode;
