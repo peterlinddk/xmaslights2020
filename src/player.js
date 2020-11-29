@@ -2,10 +2,10 @@
 import path from "path";
 import fs from "fs";
 import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from "./public/objectmodel.js";
-import onoff from "onoff";
+// import onoff from "onoff";
 export { Player };
 
-const Gpio = onoff.Gpio;
+const Gpio = null; //onoff.Gpio;
 
 // This is the player, intended to run on the server
 // It runs continually, loads the sequence from sequence.json, and plays through it, using the date-time
@@ -109,9 +109,8 @@ class Player {
         next = this.nextInQueue();
       }
 
-      const timeToNextTick = 200;
-      this.updateCurrentTime(); // TODO: Make update return timeToNextTick
-
+      // update the current time - and wait for the next tick ...
+      const timeToNextTick = this.updateCurrentTime(); 
       this.timeout = setTimeout(this.tick.bind(this), timeToNextTick);
     }
   }
@@ -153,24 +152,38 @@ class Player {
     }
   }
 
+  // Updates the currentTime, and returns the number of miliseconds to wait before the next tick
   updateCurrentTime() {
-    // TODO: Maybe more intelligently than this - e.g. actually look at the time!
+    let timeToNextTick = 200; // default wait-time is 200ms
+
+    // TODO: Use speed-setting from client - or set the time if set to actual time
+    // Speed-setting means that a number of ticks (of 100ms each) from 1 to 600 ? 600 is normal speed, but not exact time 
     this.currentTime.addMinutes(1);
+
+    if (this.currentTime.decimalTime > 24) {
+      console.log("We have crossed midnight!");
+      this.currentTime.timecode = "0:00";
+      this.resetQueue();
+    }
 
     // inform eventlistener of timeupdate (if there is one)
     if (this.timeupdateListener) {
       this.timeupdateListener(this.currentTime);
     }
+
+    // if the current time is 24:00, wait very shortly before next tick
+    if (this.currentTime.decimalTime >= 24) {
+      timeToNextTick = 1;
+    }
+    return timeToNextTick;
   }
 
   /*
-    1) TODO: Fix restart after 24:00
-    
-    2) TODO: Make player use actual time
-    
-    3) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+    1) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
 
-    4) TODO: Reload sequence if it has changed since last play!
+    2) TODO: Make player use actual time
+
+    3) TODO: Reload sequence if it has changed since last play!
         
   */
 
