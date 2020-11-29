@@ -28,6 +28,7 @@ class Track {
     this.name = track.name;
     this.port = track.port;
     this.on = track.on;
+    this.off = Math.abs(track.on - 1); // Set off to the opposite of on (only works with numbers, but that is what we expect)
     this.timeline = new TimeLine(track.timeline);
     this.timeline.track = this;
   }
