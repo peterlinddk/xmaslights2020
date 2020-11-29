@@ -95,6 +95,29 @@ function positionPlayCursor() {
   cursor.style.transform = `translate(${pixelStart - timeline.offset}px, 0)`;
 }
 
+function positionUserCursor( event ) {
+  const cursor = document.querySelector("#usercursor");
+  const cursorarea = document.querySelector("#cursors").getBoundingClientRect();
+
+  // Find the position for the mouse
+  const mousePosition = event.clientX - cursorarea.left;
+  if (0 <= mousePosition && mousePosition <= cursorarea.width ) {
+    // only update cursor when inside the cursor-area
+    const cursorPos = mousePosition;
+
+    // calculate timecode at position!
+    // needs a timeline - just take the first one
+    const timeline = sequence.tracks[0].timeline;
+    const minutes = (cursorPos + timeline.offset) / timeline.minuteWidth;
+    // convert minutes into timecode
+    const timecode = new TimeCode("0:00");
+    timecode.decimalTime = minutes / 60;
+
+    cursor.style.setProperty("--timecode", `"${timecode}"`);
+    cursor.style.transform = `translate(${cursorPos-1}px, 0)`;
+  } 
+}
+
 function buildSequence() {
   console.log("Build sequence");
   console.log(sequence);
@@ -151,8 +174,10 @@ function loaded() {
   document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mouseenter", showTimeSpanInfo));
 
   document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
+  // add user-cursor following mouse at all times
+  document.querySelector("#tracks").addEventListener("mousemove", positionUserCursor)
 
-  // add other button actions (none implemented at the moment)
+  // add other button actions
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
 
   // receive socket updates

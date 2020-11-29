@@ -45,8 +45,32 @@ body {
   width: 1px;
   height: 230px;
   background-color: red;
-  z-index: 3;
+  pointer-events: none;
+  z-index: 2;  
   /* transition: transform .8s ease-in; */
+}
+
+#cursors #usercursor {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 1px;
+  height: 230px;
+  background-color: greenyellow;
+  pointer-events: none;
+  z-index: 2;
+  /* transition: transform .8s ease-in; */
+  --timecode: "0:30";
+}
+
+#cursors #usercursor::after {
+  display: block;
+  content: var(--timecode);
+  position: absolute;
+  font-family: Arial;
+  font-size: 10px;
+  left: 2px;
+  bottom: 20px;
 }
 
 .playing {
