@@ -1,19 +1,19 @@
 "use strict";
-import path from 'path';
+import path from "path";
 import fs from "fs";
-import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from './public/objectmodel.js';
+import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from "./public/objectmodel.js";
 export { Player };
 
 // This is the player, intended to run on the server
 // It runs continually, loads the sequence from sequence.json, and plays through it, using the date-time
 class Player {
-
   constructor() {
     this.currentTime = new TimeCode("0:00");
     this.paused = true;
+    this.queuePointer = 0;
   }
 
-  loadSequence( callback ) {
+  loadSequence(callback) {
     const obj = this;
     fs.readFile(`${path.resolve()}/src/public/sequence.json`, function (err, data) {
       if (err) throw err;
@@ -37,8 +37,8 @@ class Player {
     // Add every single timespan to the queue with an object like this:
     // { time: TimeCode, Timespan }
     // but add it twice, once for time:start, and another for time:end
-    this.sequence.tracks.forEach(track => {
-      track.timeline.timespans.forEach(timespan => {
+    this.sequence.tracks.forEach((track) => {
+      track.timeline.timespans.forEach((timespan) => {
         this.queue.push({ time: timespan.start, timespan });
         this.queue.push({ time: timespan.end, timespan });
       });
@@ -50,13 +50,20 @@ class Player {
 
   nextInQueue() {
     // get the next element in the queue (without removing it from the queue)
-    return this.queue[0];
+    return this.queue[this.queuePointer];
   }
 
   moveQueue() {
-    // remove the first element in the queue (and add it to the end of the queue to make it circular ... TODO: Maybe it shouldn't ...)
-    const next = this.queue.shift();
-    this.queue.push(next);
+    // Increment the queuePointer
+    this.queuePointer++;
+    // Do not make it circular! The queue
+    if (this.queuePointer >= this.queue.length) {
+      console.log("Queue ended!");
+    }
+  }
+
+  resetQueue() {
+    this.queuePointer = 0;
   }
 
   tick() {
@@ -66,8 +73,9 @@ class Player {
 
       let next = this.nextInQueue();
       // console.log(`next @ ${next.time}`);
+
       let firstProcess = true;
-      while (this.currentTime.compareWith(next.time) >= 0) {
+      while (next && this.currentTime.compareWith(next.time) >= 0) {
         if (firstProcess) {
           console.log("");
           firstProcess = false;
@@ -80,9 +88,10 @@ class Player {
         // and repeat
         next = this.nextInQueue();
       }
+
       const timeToNextTick = 500;
       this.updateCurrentTime(); // TODO: Make update return timeToNextTick
-    
+
       this.timeout = setTimeout(this.tick.bind(this), timeToNextTick);
     }
   }
@@ -106,7 +115,8 @@ class Player {
   }
 
   addEventListener(eventtype, callback) {
-    if (eventtype === "timeupdate") { // only "event" supported so far
+    // only "event" supported so far is timeupdate
+    if (eventtype === "timeupdate") {
       this.timeupdateListener = callback;
     }
   }
@@ -118,27 +128,25 @@ class Player {
     if (this.timeupdateListener) {
       this.timeupdateListener(this.currentTime);
     }
-
   }
 
   /*
-    TODO: Make queue use pointer instead of moving events around ...
+    1) TODO: Fix restart after 24:00
+      
+    2) TODO: Make player actually set GPIO pins from tracks - also requires better test-sequence.
 
-    TODO: Make method for setting currentTime, but retaining whatever state the lights would be in at that time - that means
+    3) TODO: Make method for setting currentTime, but retaining whatever state the lights would be in at that time - that means
     for each track: find the last event before currentTime, and set track-status to that. (problem with circular queue - maybe a queue pointer is better!)
     
-    TODO: Make player actually set GPIO pins from tracks - also requires better test-sequence.
-
-    TODO: Make player use actual time
-
-    TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+    4) TODO: Make player use actual time
+    
+    5) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+        
   */
-  
+
   // sets the current time to timecode - and removes everything in the queue before that time (ignoring the state of each track)
   setCurrentTime(timecode) {
-    for (let i = 0; i < this.queue.length; i++) {
-      
-    }
+    for (let i = 0; i < this.queue.length; i++) {}
   }
 
   play() {
@@ -149,7 +157,6 @@ class Player {
       this.paused = false;
       this.tick();
     }
-    
   }
 
   pause() {
@@ -157,7 +164,6 @@ class Player {
     this.paused = true;
     clearTimeout(this.timeout);
   }
-
 }
 
 // testing
