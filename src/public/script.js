@@ -72,6 +72,9 @@ function receivePlayerState(data) {
   }
 }
 
+function setPlayerTime(time) {
+  socket.emit("play-time", time.timecode);
+}
 
 function receivePlayerTime(data) {
   console.log("Received player-time: " + data);
@@ -258,7 +261,11 @@ function performAction(event) {
         pauseSequence();
       }
       break;
-   
+    case "settime": {
+      console.log("Set player time to 0:15");
+      setPlayerTime(new TimeCode("0:15"));
+      break;
+    }
     default:
       console.warn(`Unknown action: ${action}`);
   }

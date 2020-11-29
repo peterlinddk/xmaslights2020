@@ -132,6 +132,10 @@ io.sockets.on("connection", function (socket) {
     }
   });
 
+  socket.on("play-time", function (data) {
+    console.log(`Play time has been updated to ${data} from the client!`);
+    player.setCurrentTime(data);
+  });
 
 });
 
@@ -143,6 +147,7 @@ process.on("SIGINT", function () {
 
   // stop player
   player.pause();
+  process.stdout.end();
   process.exit();
 })
 

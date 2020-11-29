@@ -146,23 +146,62 @@ class Player {
 
   /*
     1) TODO: Fix restart after 24:00
-      
+    
+    2) TODO: Set pins to OFF if setting to a time without any prior events on that track.
+
     2) TODO: Make player actually set GPIO pins from tracks - also requires better test-sequence.
-
-    3) TODO: Make method for setting currentTime, but retaining whatever state the lights would be in at that time - that means
-    for each track: find the last event before currentTime, and set track-status to that. (problem with circular queue - maybe a queue pointer is better!)
     
-    4) TODO: Make player use actual time
+    3) TODO: Make player use actual time
     
-    5) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+    4) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
 
-    6) TODO: Reload sequence if it has changed since last play!
+    5) TODO: Reload sequence if it has changed since last play!
         
   */
 
   // sets the current time to timecode - and removes everything in the queue before that time (ignoring the state of each track)
-  setCurrentTime(timecode) {
-    for (let i = 0; i < this.queue.length; i++) {}
+  setCurrentTime(time) {
+    this.currentTime.timecode = time;
+    // set queuePointer - by finding those events that are before this, and skipping them
+    for (let i = 0; i < this.queue.length; i++) {
+      // if event.time is after currentTime - this is where the queuePointer should point
+      const event = this.queue[i];
+      if (event.time.isAfter(this.currentTime)) {
+        this.queuePointer = i-1;
+        break;
+      }
+    }
+
+    // Find events just before the queuePointer, and set the current state on all tracks to those values.
+
+    // We can't go for each track, so keep "track" of all the tracks, with an array of booleans - false means we haven't adressed this track yet
+    // go backwards through the queue, until all tracks are seen, or the queue isn't any longer
+    // for each event found:
+    // - if it is for an unseen track: 
+    // - - start / or end the event, depending on if it is a start or end .. IE process the event!
+    // - - mark that track as seen
+    // - - if tracks are still unseen - continue through the events
+    const seenTracks = new Array(this.sequence.tracks.length).fill(false);
+    for (let i = this.queuePointer; i > -1; i--) {
+      const event = this.queue[i];
+      // find the track-index for this event
+      const idx = event.timespan.timeline.track.index;
+      if (!seenTracks[idx]) {
+        this.processEvent(event);
+        seenTracks[idx] = true;
+      }
+      if (seenTracks.every(tr => tr)) {
+        // console.log("All tracks have been seen - breaking");
+        break;
+      }
+    }
+
+    // TODO: If there are unseen tracks, i.e. some without previous events - set them to off ...
+
+     // inform eventlistener of timeupdate (if there is one)
+     if (this.timeupdateListener) {
+      this.timeupdateListener(this.currentTime);
+    }
   }
 
   play() {
