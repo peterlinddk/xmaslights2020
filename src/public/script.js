@@ -72,15 +72,26 @@ function receivePlayerState(data) {
   }
 }
 
+function setPlayerTimeToClick(event) {
+  const timeline = sequence.tracks[0].timeline;
+  const clickPoint = event.clientX - timeline.element.getBoundingClientRect().left;
+  const minutes = (clickPoint + timeline.offset) / timeline.minuteWidth;
+  
+  // Find the nearest time in minutes
+  const clickTime = new TimeCode("0:00");
+  clickTime.decimalTime = minutes / 60;
+
+  setPlayerTime(clickTime);
+}
+
 function setPlayerTime(time) {
   socket.emit("play-time", time.timecode);
 }
 
 function receivePlayerTime(data) {
-  console.log("Received player-time: " + data);
+  // console.log("Received player-time: " + data);
   currentPlayerTime.timecode = data;
   positionPlayCursor();
-
 }
 
 function positionPlayCursor() {
@@ -175,7 +186,10 @@ function loaded() {
 
   document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
   // add user-cursor following mouse at all times
-  document.querySelector("#tracks").addEventListener("mousemove", positionUserCursor)
+  document.querySelector("#tracks").addEventListener("mousemove", positionUserCursor);
+
+  // add click on timecodes to set play-time
+  document.querySelector("#timecodes").addEventListener("click", setPlayerTimeToClick);
 
   // add other button actions
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
@@ -286,11 +300,6 @@ function performAction(event) {
         pauseSequence();
       }
       break;
-    case "settime": {
-      console.log("Set player time to 0:15");
-      setPlayerTime(new TimeCode("0:15"));
-      break;
-    }
     default:
       console.warn(`Unknown action: ${action}`);
   }

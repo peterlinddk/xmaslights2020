@@ -175,6 +175,10 @@ body {
   cursor: move;
 }
 
+#timecodes {
+  z-index: 0; /* necessary to allow for clicking in the timecode-area */
+}
+
 #scroller {
   grid-column: 1 / 3;
   background-color: #333;
