@@ -2,7 +2,12 @@
 import path from "path";
 import fs from "fs";
 import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from "./public/objectmodel.js";
+import onoff from "onoff";
 export { Player };
+
+const Gpio = onoff.Gpio;
+
+const LED = new Gpio(4,'out');
 
 // This is the player, intended to run on the server
 // It runs continually, loads the sequence from sequence.json, and plays through it, using the date-time
@@ -11,6 +16,17 @@ class Player {
     this.currentTime = new TimeCode("0:00");
     this.paused = true;
     this.queuePointer = 0;
+  }
+
+  setupGPIO() {
+    // run through the tracks
+    this.sequence.tracks.forEach(track => {
+      track.gpio = new Gpio(track.port,'out');
+    });
+  }
+
+  writeGPIO( gpio, value ) {
+    gpio.writeSync(value);
   }
 
   loadSequence(callback) {
@@ -23,6 +39,8 @@ class Player {
 
       obj.sequence = new Sequence(json);
       obj.buildEventQueue();
+
+      obj.setupGPIO();
 
       // TODO: Write tracks and sequence to console - as ascii-graphics
 
@@ -89,7 +107,7 @@ class Player {
         next = this.nextInQueue();
       }
 
-      const timeToNextTick = 50;
+      const timeToNextTick = 200;
       this.updateCurrentTime(); // TODO: Make update return timeToNextTick
 
       this.timeout = setTimeout(this.tick.bind(this), timeToNextTick);
@@ -102,7 +120,8 @@ class Player {
     if (event.time.equals(event.timespan.start)) {
       // start the event
       console.log(`${event.time}: ${track.name} @ ${track.port} 'ON' (${track.on})`);
-      // TODO: Set GPIO port to ON value
+      // Set GPIO port to ON value
+      this.writeGPIO( track.gpio, track.on );
 
       // Inform UI about state
       if (this.statechangeListener) {
@@ -112,7 +131,8 @@ class Player {
       // end the event
       const off = Math.abs(track.on - 1);
       console.log(`${event.time}: ${track.name} @ ${track.port} 'OFF' (${off})`);
-      // TODO: Set GPIO port to OFF value
+      // Set GPIO port to OFF value
+      this.writeGPIO( track.gpio, off);
 
       // Inform UI about state
       if (this.statechangeListener) {
