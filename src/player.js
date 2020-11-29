@@ -7,8 +7,6 @@ export { Player };
 
 const Gpio = onoff.Gpio;
 
-const LED = new Gpio(4,'out');
-
 // This is the player, intended to run on the server
 // It runs continually, loads the sequence from sequence.json, and plays through it, using the date-time
 class Player {
@@ -19,14 +17,18 @@ class Player {
   }
 
   setupGPIO() {
+    if (Gpio) {
     // run through the tracks
-    this.sequence.tracks.forEach(track => {
-      track.gpio = new Gpio(track.port,'out');
-    });
+      this.sequence.tracks.forEach(track => {
+        track.gpio = new Gpio(track.port, 'out');
+      });  
+    }
   }
 
-  writeGPIO( gpio, value ) {
-    gpio.writeSync(value);
+  writeGPIO(gpio, value) {
+    if (Gpio) {
+      gpio.writeSync(value);
+    }
   }
 
   loadSequence(callback) {
@@ -120,28 +122,25 @@ class Player {
     if (event.time.equals(event.timespan.start)) {
       // start the event
       console.log(`${event.time}: ${track.name} @ ${track.port} 'ON' (${track.on})`);
-      // Set GPIO port to ON value
-      this.writeGPIO( track.gpio, track.on );
+      this.setTrackToState(track, 'on');
 
-      // Inform UI about state
-      if (this.statechangeListener) {
-        this.statechangeListener(track, "on");
-      }
     } else if (event.time.equals(event.timespan.end)) {
       // end the event
-      const off = Math.abs(track.on - 1);
-      console.log(`${event.time}: ${track.name} @ ${track.port} 'OFF' (${off})`);
-      // Set GPIO port to OFF value
-      this.writeGPIO( track.gpio, off);
-
-      // Inform UI about state
-      if (this.statechangeListener) {
-        this.statechangeListener(track, "off");
-      }
-
+      console.log(`${event.time}: ${track.name} @ ${track.port} 'OFF' (${track.off})`);
+      this.setTrackToState(track, 'off');
     } else {
       console.log("ERROR! time does not match timespan start or end!");
       console.log(event);
+    }
+  }
+
+  setTrackToState(track, state) {
+    // Set GPIO port to ON value
+    this.writeGPIO( track.gpio, track[state] );
+
+    // Inform UI about state
+    if (this.statechangeListener) {
+      this.statechangeListener(track, state);
     }
   }
 
@@ -167,15 +166,11 @@ class Player {
   /*
     1) TODO: Fix restart after 24:00
     
-    2) TODO: Set pins to OFF if setting to a time without any prior events on that track.
-
-    2) TODO: Make player actually set GPIO pins from tracks - also requires better test-sequence.
+    2) TODO: Make player use actual time
     
-    3) TODO: Make player use actual time
-    
-    4) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+    3) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
 
-    5) TODO: Reload sequence if it has changed since last play!
+    4) TODO: Reload sequence if it has changed since last play!
         
   */
 
@@ -216,7 +211,13 @@ class Player {
       }
     }
 
-    // TODO: If there are unseen tracks, i.e. some without previous events - set them to off ...
+    // If there are unseen tracks, i.e. some without previous events - set them to off ...
+    seenTracks.forEach((seen, index) => {
+      if (!seen) {
+        // set this track to off
+        this.setTrackToState(this.sequence.tracks[index], 'off');
+      }  
+    });
 
      // inform eventlistener of timeupdate (if there is one)
      if (this.timeupdateListener) {
