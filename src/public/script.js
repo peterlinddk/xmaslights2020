@@ -529,14 +529,13 @@ function createTimeSpan(event) {
     const timeline = sequence.tracks.find(track => track.timeline.uuid === event.target.dataset.uuid).timeline;
     
     // Find the position clicked
-    const clickPoint = event.clientX - timeline.element.offsetLeft + timeline.offset;
+    const clickPoint = event.clientX - timeline.element.getBoundingClientRect().left;
+    const minutes = (clickPoint + timeline.offset) / timeline.minuteWidth;
     
     // Find the nearest time in minutes - TODO: snap to closest (earlier) 5, 15, 30 or 0 - if not conflicting with existing timespan
-    const minutes = clickPoint / timeline.minuteWidth;
     const clickTime = new TimeCode("0:00");
     clickTime.addMinutes(minutes);
 
-    // console.log(`Click on ${clickPoint} @ ${clickTime}`);
     // Create new TimeSpan object with starttime at this, and endtime 15 minutes later (always a width of 15 minutes for new timespans)
     const timeSpan = new TimeSpan({ start: clickTime.timecode, end: clickTime.addMinutes(15).timecode }, timeline);
     
