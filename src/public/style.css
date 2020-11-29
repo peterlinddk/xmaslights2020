@@ -46,7 +46,7 @@ body {
   height: 230px;
   background-color: red;
   z-index: 3;
-  transition: transform .8s ease-in;
+  /* transition: transform .8s ease-in; */
 }
 
 .playing {
@@ -78,6 +78,26 @@ body {
   position: absolute;
   color: pink;
 }
+
+.led {
+  display: inline-block;
+  width: .7em;
+  height: .7em;
+  border-radius: 50%;
+  border: 1px solid black;
+  margin-right: 4px;
+  transform: translate(0,1px);
+}
+
+.led.off {
+  background-color: rgb(146, 25, 25);
+}
+
+.led.on {
+  background-color: rgb(255, 25, 25);
+  box-shadow: 0px 0px 10px rgb(230, 78, 78);
+}
+
 
 .timeline {
   background-color: #aaa;

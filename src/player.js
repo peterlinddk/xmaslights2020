@@ -89,7 +89,7 @@ class Player {
         next = this.nextInQueue();
       }
 
-      const timeToNextTick = 500;
+      const timeToNextTick = 50;
       this.updateCurrentTime(); // TODO: Make update return timeToNextTick
 
       this.timeout = setTimeout(this.tick.bind(this), timeToNextTick);
@@ -103,11 +103,22 @@ class Player {
       // start the event
       console.log(`${event.time}: ${track.name} @ ${track.port} 'ON' (${track.on})`);
       // TODO: Set GPIO port to ON value
+
+      // Inform UI about state
+      if (this.statechangeListener) {
+        this.statechangeListener(track, "on");
+      }
     } else if (event.time.equals(event.timespan.end)) {
       // end the event
       const off = Math.abs(track.on - 1);
       console.log(`${event.time}: ${track.name} @ ${track.port} 'OFF' (${off})`);
       // TODO: Set GPIO port to OFF value
+
+      // Inform UI about state
+      if (this.statechangeListener) {
+        this.statechangeListener(track, "off");
+      }
+
     } else {
       console.log("ERROR! time does not match timespan start or end!");
       console.log(event);
@@ -115,9 +126,11 @@ class Player {
   }
 
   addEventListener(eventtype, callback) {
-    // only "event" supported so far is timeupdate
+    // only "events" supported so far are timeupdate and statechange
     if (eventtype === "timeupdate") {
       this.timeupdateListener = callback;
+    } else if (eventtype === "statechange") {
+      this.statechangeListener = callback;
     }
   }
 
@@ -125,6 +138,7 @@ class Player {
     // TODO: Maybe more intelligently than this - e.g. actually look at the time!
     this.currentTime.addMinutes(1);
 
+    // inform eventlistener of timeupdate (if there is one)
     if (this.timeupdateListener) {
       this.timeupdateListener(this.currentTime);
     }
@@ -141,6 +155,8 @@ class Player {
     4) TODO: Make player use actual time
     
     5) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
+
+    6) TODO: Reload sequence if it has changed since last play!
         
   */
 

@@ -7,6 +7,8 @@ window.addEventListener("DOMContentLoaded", start);
 let sequence = null;
 let socket = io();
 
+// TODO: Notify UI about lost socket-connection!
+
 async function start() {
   console.log("Start");
   sequence = await loadSequence();
@@ -70,6 +72,7 @@ function receivePlayerState(data) {
   }
 }
 
+
 function receivePlayerTime(data) {
   console.log("Received player-time: " + data);
   currentPlayerTime.timecode = data;
@@ -113,7 +116,7 @@ function buildSequence() {
 
     const infodiv = document.createElement("div");
     infodiv.id = `track${track.index}_id`;
-    infodiv.textContent = track.name;
+    infodiv.innerHTML = `<span class="led"></span>${track.name}`;
 
     tracks.insertBefore(infodiv, controls);
 
@@ -152,6 +155,16 @@ function loaded() {
   // receive socket updates
   socket.on("play-state", receivePlayerState);
   socket.on("play-time", receivePlayerTime);
+  socket.on("play-change", updateStateChange);
+}
+
+function updateStateChange({track,state}) {
+  const LED = document.querySelector(`#track${track}_id .led`);
+
+  LED.classList.remove("on");
+  LED.classList.remove("off");
+  
+  LED.classList.add(state);
 }
 
 function resize() {
@@ -245,6 +258,7 @@ function performAction(event) {
         pauseSequence();
       }
       break;
+   
     default:
       console.warn(`Unknown action: ${action}`);
   }

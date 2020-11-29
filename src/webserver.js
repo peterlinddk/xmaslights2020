@@ -100,6 +100,10 @@ player.loadSequence();  // TODO: Make player configurable to re-load the sequenc
 
 // Listen for play-state changes from the client - starts and stops the player
 io.sockets.on("connection", function (socket) {
+  // on initial connection, send play-state paused to client
+  socket.emit("play-state", "paused");
+
+  // otherwise wait for client data
   socket.on("play-state", function (data) {
 
     // update player currentTime
@@ -107,10 +111,15 @@ io.sockets.on("connection", function (socket) {
       socket.emit("play-time", time.timecode)
     }
 
+    function updateStateInfo( track, state ) {
+      socket.emit("play-change", { track: track.index, state });
+    }
+
     console.log(`Playing: ${data}`);
     if (data === "play") {
       player.play();
       player.addEventListener("timeupdate", updatePlayerTime);
+      player.addEventListener("statechange", updateStateInfo)
 
       // send play-state back to the client
       socket.emit("play-state", "playing");
@@ -121,7 +130,19 @@ io.sockets.on("connection", function (socket) {
       // send play-state (paused) back to the client
       socket.emit("play-state", "paused");
     }
-  })
+  });
+
+
 });
 
+process.on("SIGINT", function () {
+  console.log("Process stopped by user with ctrl+c");
+  // TODO: Unexport GPIOs
+
+  // TODO: Stop socket???
+
+  // stop player
+  player.pause();
+  process.exit();
+})
 
