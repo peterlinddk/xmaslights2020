@@ -2,10 +2,10 @@
 import path from "path";
 import fs from "fs";
 import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from "./public/objectmodel.js";
-// import onoff from "onoff";
+import onoff from "onoff";
 export { Player };
 
-const Gpio = null; //onoff.Gpio;
+const Gpio = onoff.Gpio;
 
 // This is the player, intended to run on the server
 // It runs continually, loads the sequence from sequence.json, and plays through it, using the date-time
@@ -14,6 +14,7 @@ class Player {
     this.currentTime = new TimeCode("0:00");
     this.paused = true;
     this.queuePointer = 0;
+    this.playerMode = "adjusted"; // TODO: Make it start with realtime, once that works!
   }
 
   setupGPIO() {
@@ -25,9 +26,29 @@ class Player {
     }
   }
 
+  releaseGPIO() {
+    if (Gpio) {
+      // run through the tracks
+      this.sequence.tracks.forEach(track => {
+        if (track.gpio) {
+          track.gpio.unexport();
+            
+        }
+      });  
+    }
+  }
+
   writeGPIO(gpio, value) {
     if (Gpio) {
       gpio.writeSync(value);
+    }
+  }
+
+  readGPIO(gpio) {
+    if (Gpio) {
+      return gpio.readSync();
+    } else {
+      return undefined;
     }
   }
 
@@ -149,16 +170,44 @@ class Player {
       this.timeupdateListener = callback;
     } else if (eventtype === "statechange") {
       this.statechangeListener = callback;
+    } else if (eventtype === "play") {
+      this.playListener = callback;
+    } else if (eventtype === "pause") {
+      this.pauseListener = callback;
     }
   }
 
   // Updates the currentTime, and returns the number of miliseconds to wait before the next tick
   updateCurrentTime() {
-    let timeToNextTick = 200; // default wait-time is 200ms
+    let timeToNextTick = 200; // default wait-time is 200ms - TODO: let is be configurable from the UI! (max 60000)
+
+    if (this.playerMode === "realtime") {
+      // Find actual time 'now'
+      const now = new Date();
+      const nowTime = new TimeCode(now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0'));
+  
+      if (nowTime.compareWith(this.currentTime) !== 0) {
+        console.log("Times are different");
+        
+        // if there is more than 1 minute difference, set the currentTime directly (to avoid triggering previous events)
+        if (nowTime.decimalTime - this.currentTime.decimalTime > 0.02) {
+          // times are very different - skip in the queue
+          this.setCurrentTime(nowTime.timecode);
+        } else {
+          // times aren't very different, use the queue
+          this.currentTime.timecode = nowTime.timecode;
+        }
+      }
+
+      // in realtime, wait half a minute before next tick
+      timeToNextTick = 1000 * 30;
+
+    } else {
+      this.currentTime.addMinutes(1);
+    }
 
     // TODO: Use speed-setting from client - or set the time if set to actual time
     // Speed-setting means that a number of ticks (of 100ms each) from 1 to 600 ? 600 is normal speed, but not exact time 
-    this.currentTime.addMinutes(1);
 
     if (this.currentTime.decimalTime > 24) {
       console.log("We have crossed midnight!");
@@ -186,6 +235,21 @@ class Player {
     3) TODO: Reload sequence if it has changed since last play!
         
   */
+  
+  setPlayerMode(mode) {
+    // mode can either be adjusted or realtime
+    if (mode === "realtime") {
+      this.playerMode = mode;
+      // update time, and start playing, if not already going
+      this.updateCurrentTime();
+      this.play();
+    } else if (mode === "adjusted") {
+      this.playerMode = mode;
+      // don't do anything else
+    } else {
+      console.error("Unknown playermode: " + mode + " requested");
+    }
+  }
 
   // sets the current time to timecode - and removes everything in the queue before that time (ignoring the state of each track)
   setCurrentTime(time) {
@@ -245,6 +309,11 @@ class Player {
     if (this.paused) {
       this.paused = false;
       this.tick();
+
+      // inform listeners
+      if (this.playListener) {
+        this.playListener(true);
+      }
     }
   }
 
@@ -252,6 +321,32 @@ class Player {
     console.log("Paused");
     this.paused = true;
     clearTimeout(this.timeout);
+    // inform listeners
+    if (this.playListener) {
+      this.playListener(false);
+    }
+  }
+
+  updateAllListeners() {
+    if (this.timeupdateListener) {
+      this.timeupdateListener(this.currentTime);
+    }
+    if (this.statechangeListener) {
+      this.sequence.tracks.forEach(track => {
+        const value = this.readGPIO(track.gpio);
+        if (value === track.on) {
+          this.statechangeListener(track, 'on');
+        } else {
+          this.statechangeListener(track, 'off');
+        }
+      });
+    }
+    if (this.playListener) {
+      this.playListener(!this.paused);
+    }
+    if (this.pauseListener) {
+      this.pauseListener(!this.paused);
+    }
   }
 }
 

@@ -9,9 +9,12 @@
   <body>
     <h1>XMASlights 2020</h1>
 
-    <div id="buttons">
-      <button class="player" data-action="play" data-state="paused">Play</button>
-      <button class="export" data-action="export">Export</button>
+    <div id="exportmessage" class="controls">
+      <p>
+        Der er foretaget ændringer i sekvensen
+      </p>
+      <button class="export" data-action="export">Gem på server</button>
+      <button class="reload" data-action="reload">Fortryd </button>
     </div>
     <div id="tracks">
       <div id="popup">
@@ -23,8 +26,15 @@
       </div>
       <!-- Insert dynamically created tracks here -->
 
-      <div id="controls">
-        
+      <div id="player" class="controls">
+        <button class="realtime active" data-action="realtime">Realtid</button>
+        <button class="adjusted" data-action="adjusted">Justeret</button>
+        <input class="speed speedadjust" disabled type="range" min="1" max="100" value="1" class="playslider" id="playspeed"/>
+        <div class="speedlabels speedadjust" disabled>
+          <p>normal</p>
+          <p>hurtig</p>
+        </div>
+        <button class="playbutton speedadjust" disabled data-action="play" data-state="playing"> </button>
       </div>
       <div id="timecodes">
         <svg viewBox="0 0 240 12">

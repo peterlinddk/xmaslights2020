@@ -96,39 +96,32 @@ function handler(req, res) {
 }
 
 const player = new Player();
-player.loadSequence();  // TODO: Make player configurable to re-load the sequence when asked (or when re-exported)
+player.loadSequence(function () {
+  player.setPlayerMode("realtime"); // Start playing when done loading (this should be the default)  
+});  // TODO: Make player configurable to re-load the sequence when asked (or when re-exported)
+
 
 // Listen for play-state changes from the client - starts and stops the player
 io.sockets.on("connection", function (socket) {
-  // on initial connection, send play-state paused to client
-  socket.emit("play-state", "paused");
+  player.addEventListener("play", updatePlayState);
+  player.addEventListener("pause", updatePlayState);
+  player.addEventListener("timeupdate", updatePlayerTime);
+  player.addEventListener("statechange", updateStateInfo);
 
-  // otherwise wait for client data
+  // on initial connection, send current play-mode and play-state to client
+  player.updateAllListeners();
+
+  // TODO: Missing some settings when opening in multiple windows ... push for later revisions!
+
+  // then wait for client data
   socket.on("play-state", function (data) {
-
-    // update player currentTime
-    function updatePlayerTime(time) { // TODO: Maybe get actual event here ...
-      socket.emit("play-time", time.timecode)
-    }
-
-    function updateStateInfo( track, state ) {
-      socket.emit("play-change", { track: track.index, state });
-    }
-
     console.log(`Playing: ${data}`);
     if (data === "play") {
       player.play();
-      player.addEventListener("timeupdate", updatePlayerTime);
-      player.addEventListener("statechange", updateStateInfo)
-
-      // send play-state back to the client
-      socket.emit("play-state", "playing");
-
+      // sending play-state back to the client will be handled by the listener
     } else if (data === "pause") {
       player.pause();
-
-      // send play-state (paused) back to the client
-      socket.emit("play-state", "paused");
+      // sending play-state back to the client will be handled by the listener
     }
   });
 
@@ -137,17 +130,42 @@ io.sockets.on("connection", function (socket) {
     player.setCurrentTime(data);
   });
 
+  socket.on("play-mode", function (data) {
+    console.log(`Play mode has been set to ${data} by the client`);
+    player.setPlayerMode(data);
+  });
+
+  function updatePlayState(playing) {
+    if (playing) {
+      socket.emit("play-state", "playing");
+    } else {
+      socket.emit("play-state", "paused");
+    }
+  }
+
+  // update player currentTime
+  function updatePlayerTime(time) { // TODO: Maybe get actual event here ...
+    socket.emit("play-time", time.timecode)
+  }
+
+  // update LED states
+  function updateStateInfo( track, state ) {
+    socket.emit("play-change", { track: track.index, state });
+  }
+
 });
 
 process.on("SIGINT", function () {
   console.log("Process stopped by user with ctrl+c");
-  // TODO: Unexport GPIOs
-
-  // TODO: Stop socket???
+  // TODO: Stop socket??? - inform client?
 
   // stop player
   player.pause();
+  // Unexport GPIOs
+  player.releaseGPIO()
+  // clear/end stdout
   process.stdout.end();
+  console.log("\n");
   process.exit();
 })
 

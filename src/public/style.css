@@ -140,6 +140,10 @@ body {
   cursor: pointer;
 }
 
+.timeline span.usercreated {
+  background-color: #d1d17a;
+}
+
 .timeline span::before {
   content: "";
   position: absolute;
@@ -206,15 +210,113 @@ body {
   cursor: grabbing;
 }
 
-/* buttons */
-#controls {
-  display: flex;
-  gap: 2px;
-  align-items: stretch;
+.controls {
+  color: #aaa;
+  font-family: Arial, Helvetica, sans-serif;
 }
+
 button {
-  min-width: 52px;
+  border-radius: .5em;
 }
-button#zoom_in .symbol {
-  font-size: 120%;
+
+#exportmessage {
+  border: 2px solid rgba(180, 19, 19, 0.644);
+  padding: .5em;
+  border-radius: .5em;
+  margin-bottom: 1em;
+  display: grid;
+  grid-template-columns: auto minmax(auto, 10em) minmax(auto, 10em);
+  grid-template-rows: 2.5em;
+  gap: 1em;
+  opacity: 0;
+  transition: opacity .5s;
+  pointer-events: none;
+}
+
+#exportmessage p {
+  font-weight: bold;
+  align-self: center;
+}
+
+#exportmessage.show {
+  pointer-events: all;
+  opacity: 1;
+  animation: borderpulse 5s ease-in infinite alternate;
+}
+
+@keyframes borderpulse {
+  from {
+    border-color: rgb(112, 2, 2);
+  }
+  to {
+    border-color: rgb(187, 4, 4);
+  }
+}
+
+#player {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: 1.7em 2em;
+  gap: .3em 0;
+}
+
+#player button.active {
+  background: #4fb845;
+  border-color: rgb(132, 224, 132);
+  font-weight: bold;
+}
+
+#player .realtime {
+  grid-column: 1 / 6;
+  grid-row: 1/2;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+#player .adjusted {
+  grid-column: 6 / 11;
+  grid-row: 1/2;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+#player .speed {
+  grid-column: 1 / 9;
+  grid-row: 2/2;
+}
+
+#player .speedlabels {
+  grid-column: 1 / 9;
+  grid-row: 2/2;
+  font-size: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 3px;
+  transform: translate(0,4px);
+  pointer-events: none;
+}
+
+#player .speedlabels p {
+  margin: 0;
+}
+
+#player .playbutton {
+  grid-column: 9 / 11;
+}
+
+.playbutton[data-state='paused']::before {
+  content: "▶";
+}
+
+.playbutton[data-state='playing']::before {
+  content: "⏸";
+}
+
+#player .speedadjust {
+  transition: opacity .4s;
+}
+
+#player [disabled] {
+  opacity: .3;
 }

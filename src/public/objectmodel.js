@@ -21,6 +21,11 @@ class Sequence {
     objtrack.index = this.tracks.length;
     this.tracks.push(objtrack);
   }
+
+  isModified() {
+    // loop through all the tracks and all the timespans, returns if just some are modified
+    return this.tracks.some(track => track.timeline.timespans.some(span => span.isModified()));
+  }
 }
 
 class Track {
@@ -138,6 +143,14 @@ class TimeSpan {
     this.start = new TimeCode(span.start);
     this.end = new TimeCode(span.end);
     this.uuid = uuidv4();
+
+    this.initialStart = span.start;
+    this.initialEnd = span.end;
+  }
+
+  // returns true if this timespan has been modified since construction
+  isModified() {
+    return this.userCreated || this.start.timecode !== this.initialStart || this.end.timecode !== this.initialEnd;
   }
 
   export() {
@@ -164,6 +177,10 @@ class TimeSpan {
     span.dataset.endTime = this.end.timecode;
     span.dataset.value = "on";
     span.dataset.uuid = this.uuid;
+
+    if (this.userCreated) {
+      span.classList.add("usercreated");
+    }
 
     this.element = span;
     return span;

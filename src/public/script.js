@@ -13,7 +13,10 @@ async function start() {
   console.log("Start");
   sequence = await loadSequence();
   buildSequence();
-  loaded();
+  scroller.init();
+  buildSVG();
+  positionSpans();
+  setupUI();
 }
 
 async function loadSequence() {
@@ -23,6 +26,43 @@ async function loadSequence() {
   // create new objects for everything
   const objseq = new Sequence(data);
   return objseq;
+}
+
+function setupUI() {
+  window.addEventListener("resize", resize);
+
+  // add user-cursor following mouse at all times
+  document.querySelector("#tracks").addEventListener("mousemove", positionUserCursor);
+
+  // add click on timecodes to set play-time
+  document.querySelector("#timecodes").addEventListener("click", setPlayerTimeToClick);
+
+  // add other button actions
+  document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
+
+  // receive socket updates
+  socket.on("play-state", receivePlayerState);
+  socket.on("play-time", receivePlayerTime);
+  socket.on("play-change", updateStateChange);
+
+  setupTimeLineEditor();
+}
+
+function setupTimeLineEditor() {
+  // add editor-feature to spans
+  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mousedown", timespanEditor));
+  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mouseenter", showTimeSpanInfo));
+
+  document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
+}
+
+async function reloadSequence() {
+  sequence = await loadSequence();
+  buildSequence();
+  buildSVG();
+  positionSpans();
+  setupTimeLineEditor();
+  markAsEdited(false);
 }
 
 function exportSequence() {
@@ -42,13 +82,36 @@ function exportSequence() {
     .then(data => {
       console.log("Received data:");
       console.log(data);
-  })
+      markAsEdited(false);
+    })
+    .catch(error => {
+      console.error("Could not store sequence on server");
+      console.error(error);
+    })
 
 }
 
 /* Player controls */
 
 let currentPlayerTime = new TimeCode("0:00");
+let playerIsAdjustable = false;
+
+function setPlayerMode(mode) {
+  // remove active button
+  document.querySelector("#player button.realtime").classList.remove("active");
+  document.querySelector("#player button.adjusted").classList.remove("active");
+
+  // mode can be either realtime or adjustable
+  playerIsAdjustable = mode === "adjusted";
+  // enable/disable player controls
+  document.querySelectorAll(".speedadjust").forEach(secret => secret.disabled = !playerIsAdjustable);
+  
+  // set active button
+  document.querySelector(`#player button.${mode}`).classList.add("active");
+
+  // Inform server of player mode!
+  socket.emit("play-mode", mode);
+}
 
 function playSequence() {
   socket.emit("play-state", "play");
@@ -64,24 +127,25 @@ function receivePlayerState(data) {
   const playCursor = document.querySelector("#playcursor");
   playButton.dataset.state = data;
   if (data === "playing") {
-    playButton.textContent = "Pause";
     playCursor.classList.add("playing");
   } else {
-    playButton.textContent = "Play";
     playCursor.classList.remove("playing");
   }
 }
 
 function setPlayerTimeToClick(event) {
-  const timeline = sequence.tracks[0].timeline;
-  const clickPoint = event.clientX - timeline.element.getBoundingClientRect().left;
-  const minutes = (clickPoint + timeline.offset) / timeline.minuteWidth;
-  
-  // Find the nearest time in minutes
-  const clickTime = new TimeCode("0:00");
-  clickTime.decimalTime = minutes / 60;
-
-  setPlayerTime(clickTime);
+  // ignore these clicks, if player isn't adjustable
+  if (playerIsAdjustable) {
+    const timeline = sequence.tracks[0].timeline;
+    const clickPoint = event.clientX - timeline.element.getBoundingClientRect().left;
+    const minutes = (clickPoint + timeline.offset) / timeline.minuteWidth;
+    
+    // Find the nearest time in minutes
+    const clickTime = new TimeCode("0:00");
+    clickTime.decimalTime = minutes / 60;
+    
+    setPlayerTime(clickTime);
+  }
 }
 
 function setPlayerTime(time) {
@@ -134,12 +198,14 @@ function buildSequence() {
   console.log(sequence);
 
   const tracks = document.querySelector("#tracks");
-  // NOTE: Tracks isn't cleared - maybe that should be an option for loading other sequences
-  const controls = document.querySelector("#tracks #controls");
+  // remove existing tracks and timelines
+  tracks.querySelectorAll(".track, .timeline").forEach(existing => existing.remove());
+
+  const player = document.querySelector("#tracks #player");
 
   /*
     // A Track looks like this: (two divs, one for info, another for the timeline with dynamically created spans)
-    <div id="track1_id">NAME</div>
+    <div id="track1_id" class="track"><span class="led"></span>NAME</div>
     <div id="track1_timeline" class="timeline">
       <span data-start-time="0:00" data-end-time="3:00" data-value="on"></span>
       <span data-start-time="4:00" data-end-time="5:00" data-value="on"></span>
@@ -153,9 +219,10 @@ function buildSequence() {
 
     const infodiv = document.createElement("div");
     infodiv.id = `track${track.index}_id`;
+    infodiv.classList.add("track");
     infodiv.innerHTML = `<span class="led"></span>${track.name}`;
 
-    tracks.insertBefore(infodiv, controls);
+    tracks.insertBefore(infodiv, player);
 
     const timelinediv = document.createElement("div");
     timelinediv.id = `track${track.index}_timeline`;
@@ -169,36 +236,11 @@ function buildSequence() {
       const span = timeSpan.createElement();
       timelinediv.append(span);
     });
-    tracks.insertBefore(timelinediv, controls);
+    tracks.insertBefore(timelinediv, player);
   });
 }
 
-function loaded() {
-  console.log("Loaded");
-  scroller.init();
-  buildSVG();
-  positionSpans();
-  window.addEventListener("resize", resize);
 
-  // add editor-feature to spans
-  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mousedown", timespanEditor));
-  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mouseenter", showTimeSpanInfo));
-
-  document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
-  // add user-cursor following mouse at all times
-  document.querySelector("#tracks").addEventListener("mousemove", positionUserCursor);
-
-  // add click on timecodes to set play-time
-  document.querySelector("#timecodes").addEventListener("click", setPlayerTimeToClick);
-
-  // add other button actions
-  document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
-
-  // receive socket updates
-  socket.on("play-state", receivePlayerState);
-  socket.on("play-time", receivePlayerTime);
-  socket.on("play-change", updateStateChange);
-}
 
 function updateStateChange({track,state}) {
   const LED = document.querySelector(`#track${track}_id .led`);
@@ -293,6 +335,17 @@ function performAction(event) {
     case "export":
       exportSequence();
       break;
+    case "reload":
+      reloadSequence();
+      break;
+    case "realtime":
+      // set player to be realtime - prevent adjustments
+      setPlayerMode("realtime");
+      break;
+    case "adjusted":
+      // set player to be adjustable - enable adjustments
+      setPlayerMode("adjusted");
+      break;
     case "play":
       if (target.dataset.state === "paused") {
         playSequence();
@@ -302,6 +355,21 @@ function performAction(event) {
       break;
     default:
       console.warn(`Unknown action: ${action}`);
+  }
+}
+
+/* editor-state */
+let sequenceAltered = false;
+
+function markAsEdited(edited) {
+  // ignore 'changes' to same state
+  if (edited !== sequenceAltered) {
+    sequenceAltered = edited;
+    if (sequenceAltered) {
+      document.querySelector("#exportmessage").classList.add("show");
+    } else {
+      document.querySelector("#exportmessage").classList.remove("show");
+    }
   }
 }
 
@@ -547,6 +615,8 @@ function createTimeSpan(event) {
 
     // Create new TimeSpan object with starttime at this, and endtime 15 minutes later (always a width of 15 minutes for new timespans)
     const timeSpan = new TimeSpan({ start: clickTime.timecode, end: clickTime.addMinutes(15).timecode }, timeline);
+    // mark this new timeSpan as dynamically created
+    timeSpan.userCreated = true;
     
     // Make sure this timespan doesn't overlap existing timespans
     if (timeline.overlaps(timeSpan)) {
@@ -563,6 +633,7 @@ function createTimeSpan(event) {
       span.addEventListener("mouseenter", showTimeSpanInfo);
       timeSpan.position();
       // That should be it
+      markAsEdited(true);
     }
   }
 }
@@ -642,6 +713,9 @@ const timespanEditor = {
       document.querySelector("#popup").classList.remove("show");
       document.querySelector("#popup").classList.remove("delete");
     }
+
+    // If the timespan was modified from the original (json-read timespan), then inform the user that the sequence is edited
+    markAsEdited(sequence.isModified());
 
     // forget about the selected element
     this.span = null;
