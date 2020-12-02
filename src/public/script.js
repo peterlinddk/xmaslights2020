@@ -44,6 +44,7 @@ function setupUI() {
   socket.on("play-state", receivePlayerState);
   socket.on("play-time", receivePlayerTime);
   socket.on("play-change", updateStateChange);
+  socket.on("play-mode", updatePlayerMode);
 
   setupTimeLineEditor();
 }
@@ -96,7 +97,7 @@ function exportSequence() {
 let currentPlayerTime = new TimeCode("0:00");
 let playerIsAdjustable = false;
 
-function setPlayerMode(mode) {
+function setPlayerMode(mode, informserver=true) {
   // remove active button
   document.querySelector("#player button.realtime").classList.remove("active");
   document.querySelector("#player button.adjusted").classList.remove("active");
@@ -109,8 +110,15 @@ function setPlayerMode(mode) {
   // set active button
   document.querySelector(`#player button.${mode}`).classList.add("active");
 
-  // Inform server of player mode!
-  socket.emit("play-mode", mode);
+  if( informserver ) {
+    // Inform server of player mode!
+    socket.emit("play-mode", mode);
+  }
+  
+}
+
+function updatePlayerMode(mode) {
+  setPlayerMode(mode, false);
 }
 
 function playSequence() {

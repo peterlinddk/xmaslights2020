@@ -107,6 +107,7 @@ io.sockets.on("connection", function (socket) {
   player.addEventListener("pause", updatePlayState);
   player.addEventListener("timeupdate", updatePlayerTime);
   player.addEventListener("statechange", updateStateInfo);
+  player.addEventListener("modechange", updatePlayerMode);
 
   // on initial connection, send current play-mode and play-state to client
   player.updateAllListeners();
@@ -146,6 +147,10 @@ io.sockets.on("connection", function (socket) {
   // update player currentTime
   function updatePlayerTime(time) { // TODO: Maybe get actual event here ...
     socket.emit("play-time", time.timecode)
+  }
+
+  function updatePlayerMode(mode) {
+    socket.emit("play-mode", mode);
   }
 
   // update LED states

@@ -165,15 +165,23 @@ class Player {
   }
 
   addEventListener(eventtype, callback) {
-    // only "events" supported so far are timeupdate and statechange
-    if (eventtype === "timeupdate") {
-      this.timeupdateListener = callback;
-    } else if (eventtype === "statechange") {
-      this.statechangeListener = callback;
-    } else if (eventtype === "play") {
-      this.playListener = callback;
-    } else if (eventtype === "pause") {
-      this.pauseListener = callback;
+    // so far, only one of each eventlistener can be added
+    switch(eventtype) {
+      case "timeupdate":
+        this.timeupdateListener = callback;
+        break;
+      case "statechange":
+        this.statechangeListener = callback;
+        break;
+      case "play":
+        this.playListener = callback;
+        break;
+      case "pause":
+        this.pauseListener = callback;
+        break;
+      case "modechange":
+        this.modeListener = callback;
+        break;
     }
   }
 
@@ -248,6 +256,10 @@ class Player {
       // don't do anything else
     } else {
       console.error("Unknown playermode: " + mode + " requested");
+    }
+
+    if( this.modeListener) {
+      this.modeListener(mode);
     }
   }
 
@@ -346,6 +358,9 @@ class Player {
     }
     if (this.pauseListener) {
       this.pauseListener(!this.paused);
+    }
+    if(this.modeListener) {
+      this.modeListener(this.playerMode);
     }
   }
 }
