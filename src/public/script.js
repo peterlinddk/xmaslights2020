@@ -192,6 +192,7 @@ function positionPlayCursor() {
   // Get first timeline in sequence
   const timeline = sequence.tracks[0].timeline;
   const pixelStart = hour * timeline.hourWidth + minute * timeline.minuteWidth;
+  cursor.style.setProperty("--timecode", `"${currentPlayerTime.timecode}"`);
   cursor.style.transform = `translate(${pixelStart - timeline.offset}px, 0)`;
 }
 

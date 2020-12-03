@@ -33,7 +33,7 @@ body {
   /* TODO: Rows need to be all tracks + time + what? */
   grid-row: 1 / 10;
   position: absolute;
-  overflow: hidden;
+  /* overflow: hidden; - why? */
   width: 100%;
   height: 100%;
 }
@@ -47,7 +47,16 @@ body {
   background-color: red;
   pointer-events: none;
   z-index: 2;  
+  --timecode: "0:30";
   /* transition: transform .8s ease-in; */
+}
+
+#cursors #playcursor::before {
+  content: var(--timecode);
+  display: block;
+  transform: translate(-1em,-100%);
+  color:  rgb(243, 124, 124);
+  
 }
 
 #cursors #usercursor {
