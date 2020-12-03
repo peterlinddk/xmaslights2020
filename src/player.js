@@ -14,7 +14,7 @@ class Player {
     this.currentTime = new TimeCode("0:00");
     this.paused = true;
     this.queuePointer = 0;
-    this.playerMode = "adjusted"; // TODO: Make it start with realtime, once that works!
+    this.playerMode = "realtime"; // By default, start in "realtime" mode
     this.speed = 2; // Default values for adjusted mode
     this.timeBetweenTicks = 200;
   }
@@ -224,13 +224,20 @@ class Player {
       this.timeupdateListener(this.currentTime);
     }
 
-    // if the current time is 24:00, wait very shortly before next tick
+    // if the current time is 24:00, we have crossed midnight, and should start over
     if (this.currentTime.decimalTime >= 24) {
-      timeToNextTick = 1;
       console.log("We have crossed midnight!");
+
+      // Make sure we process any remaining events for 24:00!
+      const remaining = this.queue.slice(this.queuePointer);
+      remaining.forEach( event => this.processEvent(event) );
+
       // Reset the timecode, and the queue
       this.currentTime.timecode = "0:00";
       this.resetQueue();
+
+      // Wait very short before the next tick - so that 24:00 and 0:00 is basically the same time
+      timeToNextTick = 1;
     }
 
     return timeToNextTick;
