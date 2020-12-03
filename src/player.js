@@ -15,6 +15,8 @@ class Player {
     this.paused = true;
     this.queuePointer = 0;
     this.playerMode = "adjusted"; // TODO: Make it start with realtime, once that works!
+    this.speed = 2; // Default values for adjusted mode
+    this.timeBetweenTicks = 200;
   }
 
   setupGPIO() {
@@ -182,12 +184,15 @@ class Player {
       case "modechange":
         this.modeListener = callback;
         break;
+      case "speedchange":
+        this.speedListener = callback;
+        break;
     }
   }
 
   // Updates the currentTime, and returns the number of miliseconds to wait before the next tick
   updateCurrentTime() {
-    let timeToNextTick = 200; // default wait-time is 200ms - TODO: let is be configurable from the UI! (max 60000)
+    let timeToNextTick = this.timeBetweenTicks; // default wait-time is 200ms - can be adjusted up to 60000ms (1 minute)
 
     if (this.playerMode === "realtime") {
       // Find actual time 'now'
@@ -207,20 +212,11 @@ class Player {
         }
       }
 
-      // in realtime, wait half a minute before next tick
+      // in realtime, wait half a minute before next tick - just to be sure we don't skip a full minute
       timeToNextTick = 1000 * 30;
 
     } else {
       this.currentTime.addMinutes(1);
-    }
-
-    // TODO: Use speed-setting from client - or set the time if set to actual time
-    // Speed-setting means that a number of ticks (of 100ms each) from 1 to 600 ? 600 is normal speed, but not exact time 
-
-    if (this.currentTime.decimalTime > 24) {
-      console.log("We have crossed midnight!");
-      this.currentTime.timecode = "0:00";
-      this.resetQueue();
     }
 
     // inform eventlistener of timeupdate (if there is one)
@@ -231,16 +227,17 @@ class Player {
     // if the current time is 24:00, wait very shortly before next tick
     if (this.currentTime.decimalTime >= 24) {
       timeToNextTick = 1;
+      console.log("We have crossed midnight!");
+      // Reset the timecode, and the queue
+      this.currentTime.timecode = "0:00";
+      this.resetQueue();
     }
+
     return timeToNextTick;
   }
 
   /*
-    1) TODO: Make it possible to control time from webpage, set current time, speedup, and set to "realtime"
-
-    2) TODO: Make player use actual time
-
-    3) TODO: Reload sequence if it has changed since last play!
+     TODO: Reload sequence if it has changed since last play!
         
   */
   
@@ -253,7 +250,10 @@ class Player {
       this.play();
     } else if (mode === "adjusted") {
       this.playerMode = mode;
-      // don't do anything else
+      // Clear current timeout, and tick immediately - play-mode and speed should be as previous.
+      clearTimeout(this.timeout);
+      this.tick();
+      // This will start playing immediately, since realtime was playing, this will also be!
     } else {
       console.error("Unknown playermode: " + mode + " requested");
     }
@@ -262,6 +262,27 @@ class Player {
       this.modeListener(mode);
     }
   }
+
+
+  setPlayerSpeed( speed ) {
+    // speed is a number from 1 to 100 - 1 is "normal" and 100 is "fastest"
+    // 1 is 60000 ms - 100 is 100ms
+
+    // Convert the linear slider-scale to an exponential time-scale
+    const timeout = 100 * Math.pow(1.0660,speed);
+    this.speed = speed; // Store the speed in case we want to reinform the client of what it is set to.
+    this.timeBetweenTicks = timeout;
+
+    // Inform the listener - if any
+    if(this.speedListener) {
+      this.speedListener(speed);
+    }
+
+    // Clear the current timeout, and tick immediately (Maybe wait??)
+    clearTimeout(this.timeout);
+    this.tick();
+  }
+
 
   // sets the current time to timecode - and removes everything in the queue before that time (ignoring the state of each track)
   setCurrentTime(time) {
@@ -362,15 +383,9 @@ class Player {
     if(this.modeListener) {
       this.modeListener(this.playerMode);
     }
+    if(this.speedListener) {
+      console.log("Updating speed listener");
+      this.speedListener(this.speed);
+    }
   }
 }
-
-// testing
-/*
-const player = new Player();
-player.loadSequence(start);
-
-function start() {
-  player.start();
-}
-*/

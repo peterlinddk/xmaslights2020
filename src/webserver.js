@@ -108,6 +108,7 @@ io.sockets.on("connection", function (socket) {
   player.addEventListener("timeupdate", updatePlayerTime);
   player.addEventListener("statechange", updateStateInfo);
   player.addEventListener("modechange", updatePlayerMode);
+  player.addEventListener("speedchange", updatePlayerSpeed);
 
   // on initial connection, send current play-mode and play-state to client
   player.updateAllListeners();
@@ -136,12 +137,21 @@ io.sockets.on("connection", function (socket) {
     player.setPlayerMode(data);
   });
 
+  socket.on("play-speed", function(data) {
+    console.log("Play speed has been set to: " + data + " by the clients");
+    player.setPlayerSpeed(Number.parseInt(data));
+  });
+
   function updatePlayState(playing) {
     if (playing) {
       socket.emit("play-state", "playing");
     } else {
       socket.emit("play-state", "paused");
     }
+  }
+
+  function updatePlayerSpeed(speed) {
+    socket.emit("play-speed", speed);
   }
 
   // update player currentTime

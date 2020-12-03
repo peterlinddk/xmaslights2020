@@ -283,6 +283,7 @@ button {
 #player .speed {
   grid-column: 1 / 9;
   grid-row: 2/2;
+  transform: scaleX(-1); /* flip the slider from max -> min */
 }
 
 #player .speedlabels {

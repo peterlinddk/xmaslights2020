@@ -40,11 +40,15 @@ function setupUI() {
   // add other button actions
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
 
+  // and slider-speed adjuster
+  document.querySelector("#playspeed").addEventListener("change", setPlayerSpeed);
+
   // receive socket updates
   socket.on("play-state", receivePlayerState);
   socket.on("play-time", receivePlayerTime);
   socket.on("play-change", updateStateChange);
   socket.on("play-mode", updatePlayerMode);
+  socket.on("play-speed", updatePlayerSpeed);
 
   setupTimeLineEditor();
 }
@@ -93,6 +97,7 @@ function exportSequence() {
 }
 
 /* Player controls */
+// TODO: Create a playercontrol object to handle all this (incl socket communication with server)
 
 let currentPlayerTime = new TimeCode("0:00");
 let playerIsAdjustable = false;
@@ -117,7 +122,19 @@ function setPlayerMode(mode, informserver=true) {
   
 }
 
+function setPlayerSpeed(event) {
+  const speed = event.target.value;
+  // Just send the speed (1-100) directly to the server, don't bother with any calculations here.
+  socket.emit("play-speed", speed);
+}
+
+function updatePlayerSpeed(speed) {
+  // console.log(`Received speed-setting from server: ${speed}`);
+  document.querySelector("#playspeed").value = speed;
+}
+
 function updatePlayerMode(mode) {
+  // console.log(`Received player mode: ${mode}`);
   setPlayerMode(mode, false);
 }
 
