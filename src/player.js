@@ -203,7 +203,7 @@ class Player {
         console.log("Times are different");
         
         // if there is more than 1 minute difference, set the currentTime directly (to avoid triggering previous events)
-        if (nowTime.decimalTime - this.currentTime.decimalTime > 0.02) {
+        if (Math.abs(nowTime.decimalTime - this.currentTime.decimalTime) > 0.02) {
           // times are very different - skip in the queue
           this.setCurrentTime(nowTime.timecode);
         } else {
