@@ -60,11 +60,8 @@ class Player {
       if (err) throw err;
 
       const json = JSON.parse(data);
-      // console.log(json);
-
       obj.sequence = new Sequence(json);
       obj.buildEventQueue();
-
       obj.setupGPIO();
 
       // TODO: Write tracks and sequence to console - as ascii-graphics
@@ -99,9 +96,10 @@ class Player {
   moveQueue() {
     // Increment the queuePointer
     this.queuePointer++;
-    // Do not make it circular! The queue
+    // Do not make it circular! The queue shouldn't be asked to move beyond the end, but just in case:
     if (this.queuePointer >= this.queue.length) {
       console.log("Queue ended!");
+      // TODO: Should the resetQueue be called? Investigate if this can ever happen!
     }
   }
 
@@ -111,18 +109,18 @@ class Player {
 
   tick() {
     if (!this.paused) {
-      process.stdout.cursorTo(0);
-      process.stdout.write(`tick @ ${this.currentTime}  `);
+      // process.stdout.cursorTo(0);
+      // process.stdout.write(`tick @ ${this.currentTime}  `);
 
       let next = this.nextInQueue();
       // console.log(`next @ ${next.time}`);
 
       let firstProcess = true;
       while (next && this.currentTime.compareWith(next.time) >= 0) {
-        if (firstProcess) {
-          console.log("");
-          firstProcess = false;
-        }
+        // if (firstProcess) {
+        //   console.log("");
+        //   firstProcess = false;
+        // }
         // process next event
         this.processEvent(next);
 
@@ -199,15 +197,14 @@ class Player {
       const now = new Date();
       const nowTime = new TimeCode(now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0'));
   
-      if (nowTime.compareWith(this.currentTime) !== 0) {
-        console.log("Times are different");
-        
+      // Only act on this tick, if the clock has changed at least a minute since last tick
+      if (nowTime.compareWith(this.currentTime) !== 0) {        
         // if there is more than 1 minute difference, set the currentTime directly (to avoid triggering previous events)
         if (Math.abs(nowTime.decimalTime - this.currentTime.decimalTime) > 0.02) {
           // times are very different - skip in the queue
           this.setCurrentTime(nowTime.timecode);
         } else {
-          // times aren't very different, use the queue
+          // times aren't very different, use the queue as is
           this.currentTime.timecode = nowTime.timecode;
         }
       }
@@ -226,8 +223,6 @@ class Player {
 
     // if the current time is 24:00, we have crossed midnight, and should start over
     if (this.currentTime.decimalTime >= 24) {
-      console.log("We have crossed midnight!");
-
       // Make sure we process any remaining events for 24:00!
       const remaining = this.queue.slice(this.queuePointer);
       remaining.forEach( event => this.processEvent(event) );
@@ -323,7 +318,7 @@ class Player {
         seenTracks[idx] = true;
       }
       if (seenTracks.every(tr => tr)) {
-        // console.log("All tracks have been seen - breaking");
+        // All tracks have been seen - breaking
         break;
       }
     }
@@ -391,7 +386,6 @@ class Player {
       this.modeListener(this.playerMode);
     }
     if(this.speedListener) {
-      console.log("Updating speed listener");
       this.speedListener(this.speed);
     }
   }

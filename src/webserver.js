@@ -20,31 +20,32 @@ function handler(req, res) {
 
   if (req.method === "POST") {
     // Receive POST data
-    // console.log("POST");
     let body = "";
     req.on("data", chunk => {
       body += chunk.toString();
     });
     req.on("end", () => {
-      console.log("Done receiving POST");
+      console.log("Received sequence from client");
       
       // rename existing sequence.json to sequence_DATETIME.backup
       const d = new Date();
       const DATETIME = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}${String(d.getSeconds()).padStart(2, "0")}`;
 
-      fs.rename(`${__dirname}/public/sequence.json`, `${__dirname}/public/sequence_${DATETIME}.backup`, function (err) {
+      const backupName = `sequence_${DATETIME}.backup`;
+
+      fs.rename(`${__dirname}/public/sequence.json`, `${__dirname}/public/${backupName}`, function (err) {
         if (err) {
           console.log("ERROR: ", err);
         } else {
-          console.log("Renamed old sequence to backup");
+          console.log(`Renamed old sequence to ${backupName}`);
           // Write new sequence.json
           fs.writeFile(`${__dirname}/public/sequence.json`, body, function (err) {
             if (err) throw err;
-            console.log("Saved file succesfully");
+            console.log("Saved new file succesfully");
             // Send JSON response back to client.
             const result = {
               "received": "OK",
-              "renamedOldTo": `${__dirname}/public/sequence_${DATETIME}.backup`
+              "renamedOldTo": `${backupName}`
             };
             res.writeHead(200, { "Content-Type": "application/json" });
             res.write(JSON.stringify(result));
@@ -117,7 +118,6 @@ io.sockets.on("connection", function (socket) {
 
   // then wait for client data
   socket.on("play-state", function (data) {
-    console.log(`Playing: ${data}`);
     if (data === "play") {
       player.play();
       // sending play-state back to the client will be handled by the listener
@@ -133,12 +133,12 @@ io.sockets.on("connection", function (socket) {
   });
 
   socket.on("play-mode", function (data) {
-    console.log(`Play mode has been set to ${data} by the client`);
+    console.log(`Play mode has been set to ${data} by the client!`);
     player.setPlayerMode(data);
   });
 
   socket.on("play-speed", function(data) {
-    console.log("Play speed has been set to: " + data + " by the clients");
+    console.log(`Play speed has been set to: ${data} by the client!`);
     player.setPlayerSpeed(Number.parseInt(data));
   });
 
@@ -178,9 +178,11 @@ process.on("SIGINT", function () {
   player.pause();
   // Unexport GPIOs
   player.releaseGPIO()
+  // stop server - but don't wait ...
+  server.close();
   // clear/end stdout
   process.stdout.end();
-  console.log("\n");
-  process.exit();
+  console.log("\nServer has closed down");
+  process.exit();  
 })
 
