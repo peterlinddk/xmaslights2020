@@ -441,6 +441,7 @@ const scroller = {
     return this.scrollBarX / this.scrollWidth;
   },
   handleEvent(event) {
+    // TODO: Add 'click' event to jump-scroll to where the user clicked.
     // console.log(`Event type: ${event.type}`);
     if (event.type === "mouseup" || event.type === "mouseleave") {
       this.release(event);
@@ -457,9 +458,11 @@ const scroller = {
     // console.log(event);
     this.grabbing = true;
     this.scrollbar.classList.add("grabbing");
-    this.scrollarea.addEventListener("mousemove", this);
-    this.scrollarea.addEventListener("mouseup", this);
-    this.scrollarea.addEventListener("mouseleave", this);
+    // TODO: Add the eventlisteners to a larger area than just the scrollarea ...
+    // Perhaps create a huge area within to move the mouse - and remove it afterwards
+    document.querySelector("#tracks").addEventListener("mousemove", this); // was this.scrollarea
+    document.querySelector("#tracks").addEventListener("mouseup", this);
+    document.querySelector("#tracks").addEventListener("mouseleave", this);
 
     // Find click point relative to scrollarea
     this.startX = event.clientX - this.scrollarea.offsetLeft;
@@ -485,9 +488,9 @@ const scroller = {
     // console.log("Release!");
     this.grabbing = false;
     this.scrollbar.classList.remove("grabbing");
-    this.scrollarea.removeEventListener("mousemove", this);
-    this.scrollarea.removeEventListener("mouseup", this);
-    this.scrollarea.removeEventListener("mouseleave", this);
+    document.querySelector("#tracks").removeEventListener("mousemove", this);
+    document.querySelector("#tracks").removeEventListener("mouseup", this);
+    document.querySelector("#tracks").removeEventListener("mouseleave", this);
 
     this.grabbedElement = null;
   },
