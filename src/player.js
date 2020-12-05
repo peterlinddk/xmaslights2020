@@ -125,18 +125,18 @@ class Player {
 
   tick() {
     if (!this.paused) {
-      // process.stdout.cursorTo(0);
-      // process.stdout.write(`tick @ ${this.currentTime}  `);
+       process.stdout.cursorTo(0);
+      process.stdout.write(`tick @ ${this.currentTime}  `);
 
       let next = this.nextInQueue();
-      // console.log(`next @ ${next.time}`);
+      console.log(`next @ ${next.time}`);
 
       let firstProcess = true;
       while (next && this.currentTime.compareWith(next.time) >= 0) {
-        // if (firstProcess) {
-        //   console.log("");
-        //   firstProcess = false;
-        // }
+        if (firstProcess) {
+          console.log("");
+          firstProcess = false;
+        }
         // process next event
         this.processEvent(next);
 
@@ -217,8 +217,14 @@ class Player {
       if (nowTime.compareWith(this.currentTime) !== 0) {        
         // if there is more than 1 minute difference, set the currentTime directly (to avoid triggering previous events)
         if (Math.abs(nowTime.decimalTime - this.currentTime.decimalTime) > 0.02) {
-          // times are very different - skip in the queue
-          this.setCurrentTime(nowTime.timecode);
+          // Times are very different, check if we have crossed midnight!
+          if(nowTime.decimalTime < 0.02 && this.currentTime.decimalTime > 23.96) {
+            console.log("We have crossed midnight!");
+            this.crossMidnight();
+          } else { 
+            // times are very different - skip in the queue
+            this.setCurrentTime(nowTime.timecode);
+          }
         } else {
           // times aren't very different, use the queue as is
           this.currentTime.timecode = nowTime.timecode;
@@ -230,6 +236,15 @@ class Player {
 
     } else {
       this.currentTime.addMinutes(1);
+
+      // if the current time is 24:00, we have crossed midnight, and should start over
+      // Note: This only happens in adjusted time - in realtime, it would go directly from 23:59 to 0:00
+      if (this.currentTime.decimalTime >= 24) {
+        this.crossMidnight();
+
+        // Wait very short before the next tick - so that 24:00 and 0:00 is basically the same time
+        timeToNextTick = 1;
+      }
     }
 
     // inform eventlistener of timeupdate (if there is one)
@@ -237,21 +252,17 @@ class Player {
       this.timeupdateListener(this.currentTime);
     }
 
-    // if the current time is 24:00, we have crossed midnight, and should start over
-    if (this.currentTime.decimalTime >= 24) {
-      // Make sure we process any remaining events for 24:00!
-      const remaining = this.queue.slice(this.queuePointer);
-      remaining.forEach( event => this.processEvent(event) );
-
-      // Reset the timecode, and the queue
-      this.currentTime.timecode = "0:00";
-      this.resetQueue();
-
-      // Wait very short before the next tick - so that 24:00 and 0:00 is basically the same time
-      timeToNextTick = 1;
-    }
-
     return timeToNextTick;
+  }
+
+  crossMidnight() {
+    // Make sure we process any remaining events for 24:00!
+    const remaining = this.queue.slice(this.queuePointer);
+    remaining.forEach( event => this.processEvent(event) );
+
+    // Reset the timecode, and the queue
+    this.currentTime.timecode = "0:00";
+    this.resetQueue();
   }
   
   setPlayerMode(mode) {
