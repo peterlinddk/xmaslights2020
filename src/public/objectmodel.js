@@ -23,8 +23,8 @@ class Sequence {
   }
 
   isModified() {
-    // loop through all the tracks and all the timespans, returns if just some are modified
-    return this.tracks.some(track => track.timeline.timespans.some(span => span.isModified()));
+    // loop through all the tracks and all the timelines, returns true if just some are modified
+    return this.tracks.some(track => track.timeline.isModified());
   }
 }
 
@@ -69,11 +69,18 @@ class TimeLine {
       }
     });
 
+    // Mark this timeline as unmodified
+    this.modified = false;
+
     this.uuid = uuidv4();
   }
 
   export() {
     return this.timespans.map(timespan => timespan.export() );
+  }
+
+  isModified() {
+    return this.modified || this.timespans.some(span => span.isModified());
   }
 
   // returns the timespan before this one - or undefined if this is the first
@@ -146,6 +153,7 @@ class TimeSpan {
 
     this.initialStart = span.start;
     this.initialEnd = span.end;
+    this.userCreated = false;
   }
 
   // returns true if this timespan has been modified since construction
@@ -188,6 +196,10 @@ class TimeSpan {
 
   // removes this timespan from the timeline, and from the DOM
   delete() {
+    // if this wasn't user.created, then mark the timeline as modified
+    if(!this.userCreated) {
+      this.timeline.modified = true;
+    }
     this.element.remove();
     this.timeline.timespans.splice(this.timeline.timespans.indexOf(this), 1);
   }
