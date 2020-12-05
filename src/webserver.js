@@ -51,6 +51,9 @@ function handler(req, res) {
             res.write(JSON.stringify(result));
             res.end();
 
+            // Inform player, and get it to reload the sequence!
+            player.reloadSequence();
+
           });
         }
       });
@@ -99,7 +102,7 @@ function handler(req, res) {
 const player = new Player();
 player.loadSequence(function () {
   player.setPlayerMode("realtime"); // Start playing when done loading (this should be the default)  
-});  // TODO: Make player configurable to re-load the sequence when asked (or when re-exported)
+});
 
 
 // Listen for play-state changes from the client - starts and stops the player

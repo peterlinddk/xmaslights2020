@@ -34,7 +34,6 @@ class Player {
       this.sequence.tracks.forEach(track => {
         if (track.gpio) {
           track.gpio.unexport();
-            
         }
       });  
     }
@@ -70,6 +69,23 @@ class Player {
         callback();
       }
     });
+  }
+
+  // Called from the webserver, when the sequence has been updated
+  reloadSequence() {
+    // First release the GPIOs
+    this.releaseGPIO();
+
+    const player = this;
+    // Then read the sequence, and build everything anew
+    this.loadSequence( function() {
+      console.log("Sequence reloaded!");
+      // re-setCurrentTime to process any events before/across the current time
+      player.setCurrentTime( player.currentTime.timecode );
+      // The client should know that a new sequence was exported ... 
+    });
+    
+
   }
 
   buildEventQueue() {
@@ -237,11 +253,6 @@ class Player {
 
     return timeToNextTick;
   }
-
-  /*
-     TODO: Reload sequence if it has changed since last play!
-        
-  */
   
   setPlayerMode(mode) {
     // mode can either be adjusted or realtime
@@ -294,12 +305,13 @@ class Player {
       // if event.time is after currentTime - this is where the queuePointer should point
       const event = this.queue[i];
       if (event.time.isAfter(this.currentTime)) {
-        this.queuePointer = i-1;
+        this.queuePointer = i;
         break;
       }
     }
 
     // Find events just before the queuePointer, and set the current state on all tracks to those values.
+    console.log(`Process events up to: ${time}`);
 
     // We can't go for each track, so keep "track" of all the tracks, with an array of booleans - false means we haven't adressed this track yet
     // go backwards through the queue, until all tracks are seen, or the queue isn't any longer
@@ -309,7 +321,7 @@ class Player {
     // - - mark that track as seen
     // - - if tracks are still unseen - continue through the events
     const seenTracks = new Array(this.sequence.tracks.length).fill(false);
-    for (let i = this.queuePointer; i > -1; i--) {
+    for (let i = this.queuePointer-1; i > -1; i--) {
       const event = this.queue[i];
       // find the track-index for this event
       const idx = event.timespan.timeline.track.index;
@@ -331,8 +343,9 @@ class Player {
       }  
     });
 
-     // inform eventlistener of timeupdate (if there is one)
-     if (this.timeupdateListener) {
+    console.log("Done - return to normal processing");
+    // inform eventlistener of timeupdate (if there is one)
+    if (this.timeupdateListener) {
       this.timeupdateListener(this.currentTime);
     }
   }

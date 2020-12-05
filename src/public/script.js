@@ -85,9 +85,15 @@ function exportSequence() {
   })
     .then(res => res.json())
     .then(data => {
-      console.log("Received data:");
-      console.log(data);
-      markAsEdited(false);
+      // Received export confirmation!
+      if(data.received === "OK") {
+        console.log(`Exported sequence - backup is called: ${data.renamedOldTo}`);
+        markAsEdited(false);
+        reloadSequence();
+      } else {
+        console.error("Couldn't export sequence!")
+        console.error(data);
+      }
     })
     .catch(error => {
       console.error("Could not store sequence on server");
