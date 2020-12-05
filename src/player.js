@@ -125,18 +125,8 @@ class Player {
 
   tick() {
     if (!this.paused) {
-       process.stdout.cursorTo(0);
-      process.stdout.write(`tick @ ${this.currentTime}  `);
-
       let next = this.nextInQueue();
-      console.log(`next @ ${next.time}`);
-
-      let firstProcess = true;
       while (next && this.currentTime.compareWith(next.time) >= 0) {
-        if (firstProcess) {
-          console.log("");
-          firstProcess = false;
-        }
         // process next event
         this.processEvent(next);
 
