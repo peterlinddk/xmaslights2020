@@ -420,6 +420,9 @@ const scroller = {
 
     // add eventlisteners - only mousedown for starters
     this.scrollbar.addEventListener("mousedown", this);
+
+    // add wheel-listener for the entire track-area, to catch two-finger gestures on touch
+    document.querySelector("#tracks").addEventListener("wheel", this);
   },
   resize() {
     // called when the screen resizes - and the scrollarea has a new size!
@@ -452,14 +455,22 @@ const scroller = {
     if (event.type === "mousemove") {
       this.move(event);
     }
+    if(event.type==="wheel") {
+      event.preventDefault();
+      if(event.ctrlKey) {
+        // scale ...
+      } else {
+        // move
+        this.twoFingerMove(event);
+      }
+    }
   },
   grab(event) {
     // console.log("Grab!");
     // console.log(event);
     this.grabbing = true;
     this.scrollbar.classList.add("grabbing");
-    // TODO: Add the eventlisteners to a larger area than just the scrollarea ...
-    // Perhaps create a huge area within to move the mouse - and remove it afterwards
+    // Add the eventlisteners to a larger area than just the scrollarea ...
     document.querySelector("#tracks").addEventListener("mousemove", this); // was this.scrollarea
     document.querySelector("#tracks").addEventListener("mouseup", this);
     document.querySelector("#tracks").addEventListener("mouseleave", this);
@@ -568,6 +579,42 @@ const scroller = {
     this.updateScrollBar();
 
     redraw() // updates SVG and tracks
+  },
+  twoFingerMove(event) {
+    const maxWidth = this.scrollWidth - this.scrollbar.offsetLeft;
+    const minWidth = 16 * 3;
+    const maxX = this.scrollWidth - this.scrollbar.clientWidth;
+
+    // Move in X-direction is scrolling
+    let newX = this.scrollBarX - event.deltaX;
+    if( newX < 0 ) {
+      newX = 0;
+    }
+    if(newX > maxX) {
+      newX = maxX;
+    }
+
+    this.scrollBarX = newX;
+
+    // Move in Y-direction is zooming
+    let newW = this.scrollBarW - event.deltaY;
+    if (newW > maxWidth) {
+      if( newX < maxX ) {
+        newX--;
+      } else {
+        newW = maxWidth;
+      }
+    }
+    // Prevent moving to far to the left
+    if (newW < minWidth) {
+      newW = minWidth;
+    }
+
+    this.scrollBarW = newW;
+
+    this.updateScrollBar();
+    redraw();
+
   },
   updateScrollBar() {
     this.scrollbar.style.left = this.scrollBarX + "px";
