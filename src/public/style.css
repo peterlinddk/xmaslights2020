@@ -2,12 +2,13 @@ body {
   background-color: #444;
   color: yellow;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 #tracks {
   display: grid;
   grid-template-columns: max-content auto;
-  grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: auto;
   gap: .5em 1em;
   user-select: none;
   position: relative;
@@ -31,7 +32,7 @@ body {
 #tracks #cursors {
   grid-column: 2 / 3;
   /* TODO: Rows need to be all tracks + time + what? */
-  grid-row: 1 / 10;
+  grid-row: 1 / 14;
   position: absolute;
   /* overflow: hidden; - why? */
   width: 100%;
@@ -43,7 +44,7 @@ body {
   left: 0px;
   top: 0px;
   width: 1px;
-  height: 230px;
+  height: 100%;
   background-color: red;
   pointer-events: none;
   z-index: 2;  
@@ -64,7 +65,7 @@ body {
   left: 0px;
   top: 0px;
   width: 1px;
-  height: 230px;
+  height: 100%;
   background-color: greenyellow;
   pointer-events: none;
   z-index: 2;
@@ -241,7 +242,7 @@ button {
   padding: .5em;
   border-radius: .5em;
   margin-bottom: 1em;
-  display: grid;
+  display: none;
   grid-template-columns: auto minmax(auto, 10em) minmax(auto, 10em);
   grid-template-rows: 2.5em;
   gap: 1em;
@@ -256,6 +257,7 @@ button {
 }
 
 #exportmessage.show {
+  display: grid;
   pointer-events: all;
   opacity: 1;
   animation: borderpulse 5s ease-in infinite alternate;
