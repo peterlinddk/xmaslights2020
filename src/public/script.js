@@ -1,6 +1,6 @@
-import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from './objectmodel.js';
+import { Sequence, Track, TimeLine, TimeSpan, TimeCode } from "./objectmodel.js";
 
-"use strict";
+("use strict");
 
 window.addEventListener("DOMContentLoaded", start);
 
@@ -38,7 +38,7 @@ function setupUI() {
   document.querySelector("#timecodes").addEventListener("click", setPlayerTimeToClick);
 
   // add other button actions
-  document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", performAction));
+  document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", performAction));
 
   // and slider-speed adjuster
   document.querySelector("#playspeed").addEventListener("change", setPlayerSpeed);
@@ -55,10 +55,10 @@ function setupUI() {
 
 function setupTimeLineEditor() {
   // add editor-feature to spans
-  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mousedown", timespanEditor));
-  document.querySelectorAll(".timeline span").forEach((span) => span.addEventListener("mouseenter", showTimeSpanInfo));
+  document.querySelectorAll(".timeline span").forEach(span => span.addEventListener("mousedown", timespanEditor));
+  document.querySelectorAll(".timeline span").forEach(span => span.addEventListener("mouseenter", showTimeSpanInfo));
 
-  document.querySelectorAll(".timeline").forEach((timeline) => timeline.addEventListener("click", createTimeSpan));
+  document.querySelectorAll(".timeline").forEach(timeline => timeline.addEventListener("click", createTimeSpan));
 }
 
 async function reloadSequence() {
@@ -80,26 +80,25 @@ function exportSequence() {
     body: json,
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   })
     .then(res => res.json())
     .then(data => {
       // Received export confirmation!
-      if(data.received === "OK") {
+      if (data.received === "OK") {
         console.log(`Exported sequence - backup is called: ${data.renamedOldTo}`);
         markAsEdited(false);
         reloadSequence();
       } else {
-        console.error("Couldn't export sequence!")
+        console.error("Couldn't export sequence!");
         console.error(data);
       }
     })
     .catch(error => {
       console.error("Could not store sequence on server");
       console.error(error);
-    })
-
+    });
 }
 
 /* Player controls */
@@ -108,7 +107,7 @@ function exportSequence() {
 let currentPlayerTime = new TimeCode("0:00");
 let playerIsAdjustable = false;
 
-function setPlayerMode(mode, informserver=true) {
+function setPlayerMode(mode, informserver = true) {
   // remove active button
   document.querySelector("#player button.realtime").classList.remove("active");
   document.querySelector("#player button.adjusted").classList.remove("active");
@@ -116,16 +115,15 @@ function setPlayerMode(mode, informserver=true) {
   // mode can be either realtime or adjustable
   playerIsAdjustable = mode === "adjusted";
   // enable/disable player controls
-  document.querySelectorAll(".speedadjust").forEach(secret => secret.disabled = !playerIsAdjustable);
-  
+  document.querySelectorAll(".speedadjust").forEach(secret => (secret.disabled = !playerIsAdjustable));
+
   // set active button
   document.querySelector(`#player button.${mode}`).classList.add("active");
 
-  if( informserver ) {
+  if (informserver) {
     // Inform server of player mode!
     socket.emit("play-mode", mode);
   }
-  
 }
 
 function setPlayerSpeed(event) {
@@ -170,11 +168,11 @@ function setPlayerTimeToClick(event) {
     const timeline = sequence.tracks[0].timeline;
     const clickPoint = event.clientX - timeline.element.getBoundingClientRect().left;
     const minutes = (clickPoint + timeline.offset) / timeline.minuteWidth;
-    
+
     // Find the nearest time in minutes
     const clickTime = new TimeCode("0:00");
     clickTime.decimalTime = minutes / 60;
-    
+
     setPlayerTime(clickTime);
   }
 }
@@ -202,13 +200,13 @@ function positionPlayCursor() {
   cursor.style.transform = `translate(${pixelStart - timeline.offset}px, 0)`;
 }
 
-function positionUserCursor( event ) {
+function positionUserCursor(event) {
   const cursor = document.querySelector("#usercursor");
   const cursorarea = document.querySelector("#cursors").getBoundingClientRect();
 
   // Find the position for the mouse
   const mousePosition = event.clientX - cursorarea.left;
-  if (0 <= mousePosition && mousePosition <= cursorarea.width ) {
+  if (0 <= mousePosition && mousePosition <= cursorarea.width) {
     // only update cursor when inside the cursor-area
     const cursorPos = mousePosition;
 
@@ -221,8 +219,8 @@ function positionUserCursor( event ) {
     timecode.decimalTime = minutes / 60;
 
     cursor.style.setProperty("--timecode", `"${timecode}"`);
-    cursor.style.transform = `translate(${cursorPos-1}px, 0)`;
-  } 
+    cursor.style.transform = `translate(${cursorPos - 1}px, 0)`;
+  }
 }
 
 function buildSequence() {
@@ -244,8 +242,7 @@ function buildSequence() {
       <span data-start-time="5:30" data-end-time="5:45" data-value="on"></span>
     </div>
   */
-  sequence.tracks.forEach((track) => {
-
+  sequence.tracks.forEach(track => {
     // Let the track's timeline know of the scroller
     track.timeline.setScroller(scroller);
 
@@ -264,7 +261,7 @@ function buildSequence() {
     track.timeline.element = timelinediv;
 
     // create timeline and spans
-    track.timeline.timespans.forEach((timeSpan) => {
+    track.timeline.timespans.forEach(timeSpan => {
       const span = timeSpan.createElement();
       timelinediv.append(span);
     });
@@ -272,14 +269,12 @@ function buildSequence() {
   });
 }
 
-
-
-function updateStateChange({track,state}) {
+function updateStateChange({ track, state }) {
   const LED = document.querySelector(`#track${track}_id .led`);
 
   LED.classList.remove("on");
   LED.classList.remove("off");
-  
+
   LED.classList.add(state);
 }
 
@@ -345,16 +340,16 @@ function buildSVG() {
 
 function positionSpans() {
   // find all spans in all timelines, and set their left and width depending on start and end-time
-  sequence.tracks.forEach((track) => {
+  sequence.tracks.forEach(track => {
     const timeline = track.timeline;
-    timeline.timespans.forEach((timeSpan) => timeSpan.position());
+    timeline.timespans.forEach(timeSpan => timeSpan.position());
   });
 }
 
 function performAction(event) {
   // find action to perform
   let target = event.target;
-  
+
   // Find the actual action - the target might be a child of the element with the action
   let action = target.dataset.action;
   while (!action) {
@@ -423,6 +418,76 @@ const scroller = {
 
     // add wheel-listener for the entire track-area, to catch two-finger gestures on touch
     document.querySelector("#tracks").addEventListener("wheel", this);
+
+    // Add multitouch-listener (using ZingTouch library)
+    const containerElement = document.querySelector("#tracks");
+    const activeRegion = ZingTouch.Region(containerElement, false, false); // don't prevent defaults - this will disable clicking
+    const panner = new ZingTouch.Pan({ numInputs: 2 }); // Use two fingers - this doesn't conflict with trackpad twofingers
+
+    const scroller = this;
+
+    // ZingTouch bind pan-events
+    activeRegion.bind(containerElement, panner, function (event) {
+      const data = event.detail.data.shift();
+      const angle = data.currentDirection; // could also use directionFromOrigin, but that won't let the user re-decide
+
+      // If angle between 170-190 : move left
+      // if angle between 350-10 (crossing 0): move right
+      // if angle between 80-100 : move up
+      // if angle between 260-280 : move down
+      let direction = "";
+      if (angle < 10 || angle > 350) {
+        direction = "right";
+      } else if (170 < angle && angle < 190) {
+        direction = "left";
+      } else if (80 < angle && angle < 105) {
+        direction = "up";
+      } else if (260 < angle && angle < 280) {
+        direction = "down";
+      }
+      const distance = data.distanceFromOrigin;
+      const maxWidth = scroller.scrollWidth - scroller.scrollbar.offsetLeft;
+      const minWidth = 16 * 3;
+      const maxX = scroller.scrollWidth - scroller.scrollbar.clientWidth;
+
+      if (direction === "left" || direction === "right") {
+        // Move in X-direction is scrolling
+        let newX = scroller.scrollBarX - distance * (direction === "right" ? -0.2 : 0.2);
+        // TODO: These checks could be shared with other code
+        if (newX < 0) {
+          newX = 0;
+        }
+        if (newX > maxX) {
+          newX = maxX;
+        }
+        scroller.scrollBarX = newX;
+      }
+
+      if (direction === "up" || direction === "down") {
+        // Move in Y-direction is zooming
+        let newW = scroller.scrollBarW - distance * (direction === "up" ? 0.5 : -0.5);
+        // TODO: These checks could be shared with other code
+        if (newW > maxWidth) {
+          newW = maxWidth;
+        }
+        // Prevent moving to far to the left
+        if (newW < minWidth) {
+          newW = minWidth;
+        }
+
+        scroller.scrollBarW = newW;
+      }
+
+      scroller.updateScrollBar();
+      redraw();
+
+      // From https://github.com/zingchart/zingtouch/issues/19 - not sure it works properly
+      // Prevent default - but only WHEN zooming or scrolling - not when clicking!
+      event.detail.events.forEach(evt => {
+        // Within each of those special ZingTouch events, the originalEvent the browser emitted is stored.
+        evt.originalEvent.preventDefault();
+      });
+    });
   },
   resize() {
     // called when the screen resizes - and the scrollarea has a new size!
@@ -455,9 +520,9 @@ const scroller = {
     if (event.type === "mousemove") {
       this.move(event);
     }
-    if(event.type==="wheel") {
+    if (event.type === "wheel") {
       event.preventDefault();
-      if(event.ctrlKey) {
+      if (event.ctrlKey) {
         // scale ...
       } else {
         // move
@@ -471,9 +536,9 @@ const scroller = {
     this.grabbing = true;
     this.scrollbar.classList.add("grabbing");
     // Add the eventlisteners to a larger area than just the scrollarea ...
-    document.querySelector("#tracks").addEventListener("mousemove", this); // was this.scrollarea
-    document.querySelector("#tracks").addEventListener("mouseup", this);
-    document.querySelector("#tracks").addEventListener("mouseleave", this);
+    document.querySelector("body").addEventListener("mousemove", this); // was this.scrollarea
+    document.querySelector("body").addEventListener("mouseup", this);
+    document.querySelector("body").addEventListener("mouseleave", this);
 
     // Find click point relative to scrollarea
     this.startX = event.clientX - this.scrollarea.offsetLeft;
@@ -499,9 +564,9 @@ const scroller = {
     // console.log("Release!");
     this.grabbing = false;
     this.scrollbar.classList.remove("grabbing");
-    document.querySelector("#tracks").removeEventListener("mousemove", this);
-    document.querySelector("#tracks").removeEventListener("mouseup", this);
-    document.querySelector("#tracks").removeEventListener("mouseleave", this);
+    document.querySelector("body").removeEventListener("mousemove", this);
+    document.querySelector("body").removeEventListener("mouseup", this);
+    document.querySelector("body").removeEventListener("mouseleave", this);
 
     this.grabbedElement = null;
   },
@@ -578,7 +643,7 @@ const scroller = {
 
     this.updateScrollBar();
 
-    redraw() // updates SVG and tracks
+    redraw(); // updates SVG and tracks
   },
   twoFingerMove(event) {
     const maxWidth = this.scrollWidth - this.scrollbar.offsetLeft;
@@ -587,10 +652,10 @@ const scroller = {
 
     // Move in X-direction is scrolling
     let newX = this.scrollBarX - event.deltaX;
-    if( newX < 0 ) {
+    if (newX < 0) {
       newX = 0;
     }
-    if(newX > maxX) {
+    if (newX > maxX) {
       newX = maxX;
     }
 
@@ -599,7 +664,8 @@ const scroller = {
     // Move in Y-direction is zooming
     let newW = this.scrollBarW - event.deltaY;
     if (newW > maxWidth) {
-      if( newX < maxX ) {
+      if (newX < maxX) {
+        // unused!
         newX--;
       } else {
         newW = maxWidth;
@@ -614,7 +680,6 @@ const scroller = {
 
     this.updateScrollBar();
     redraw();
-
   },
   updateScrollBar() {
     this.scrollbar.style.left = this.scrollBarX + "px";
@@ -625,7 +690,7 @@ const scroller = {
 function getTimeSpanFromUuid(uuid) {
   let timeSpan = null;
   for (let i = 0; i < sequence.tracks.length; i++) {
-    timeSpan = sequence.tracks[i].timeline.timespans.find((span) => span.uuid === uuid);
+    timeSpan = sequence.tracks[i].timeline.timespans.find(span => span.uuid === uuid);
     if (timeSpan) {
       break;
     }
@@ -637,15 +702,15 @@ function getTimeSpanFromUuid(uuid) {
 function showTimeSpanInfo(event) {
   // find timespan object
   const timeSpan = getTimeSpanFromUuid(event.target.dataset.uuid);
-  const timeLineElement = timeSpan.element.parentElement;  
+  const timeLineElement = timeSpan.element.parentElement;
   // find popup
   const popup = document.querySelector("#popup");
 
   // position popup
-  let left = event.clientX - popup.getBoundingClientRect().width / 2
+  let left = event.clientX - popup.getBoundingClientRect().width / 2;
 
   // if positioned too far to the right - move it in
-  if (left > timeLineElement.clientWidth + timeLineElement.offsetLeft - 70) { 
+  if (left > timeLineElement.clientWidth + timeLineElement.offsetLeft - 70) {
     left = timeLineElement.clientWidth + timeLineElement.offsetLeft - 70;
     // 70 pixels is the hardcoded approximate width of the popup - it has display none, and thus 0 width until displayed!
   }
@@ -686,11 +751,11 @@ function createTimeSpan(event) {
 
     // Find the timeline object
     const timeline = sequence.tracks.find(track => track.timeline.uuid === event.target.dataset.uuid).timeline;
-    
+
     // Find the position clicked
     const clickPoint = event.clientX - timeline.element.getBoundingClientRect().left;
     const minutes = (clickPoint + timeline.offset) / timeline.minuteWidth;
-    
+
     // Find the nearest time in minutes - TODO: snap to closest (earlier) 5, 15, 30 or 0 - if not conflicting with existing timespan
     const clickTime = new TimeCode("0:00");
     clickTime.addMinutes(minutes);
@@ -699,7 +764,7 @@ function createTimeSpan(event) {
     const timeSpan = new TimeSpan({ start: clickTime.timecode, end: clickTime.addMinutes(15).timecode }, timeline);
     // mark this new timeSpan as dynamically created
     timeSpan.userCreated = true;
-    
+
     // Make sure this timespan doesn't overlap existing timespans
     if (timeline.overlaps(timeSpan)) {
       console.warn("Overlap! Don't create");
@@ -707,7 +772,7 @@ function createTimeSpan(event) {
     } else {
       // Add the new object to the timeline (it should insert it correctly sorted)
       timeline.add(timeSpan);
-      
+
       // Create and draw/update a HTML object for the TimeSpan - remember to add an eventlistener as well
       const span = timeSpan.createElement();
       timeline.element.append(span);
@@ -719,7 +784,6 @@ function createTimeSpan(event) {
     }
   }
 }
-
 
 // TODO: Make feature to cut timespan into two, and to join two timespans into one
 const timespanEditor = {
@@ -820,15 +884,15 @@ const timespanEditor = {
     const now = performance.now();
     if (now - 400 > this.lastMove || !this.lastMove) {
       this.lastMoveDistance = moveDistance;
-      this.lastMove = now;      
+      this.lastMove = now;
     }
-    
+
     // Prevent overlapping of previous or next
     const previous = this.span.timeline.previous(this.span)?.end ?? new TimeCode("0:00");
     const next = this.span.timeline.next(this.span)?.start ?? new TimeCode("24:00");
 
-    const distanceToPrevious = (previous.decimalTime - this.initialStart.decimalTime)*60;
-    const distanceToNext = (next.decimalTime - this.initialEnd.decimalTime)*60;
+    const distanceToPrevious = (previous.decimalTime - this.initialStart.decimalTime) * 60;
+    const distanceToNext = (next.decimalTime - this.initialEnd.decimalTime) * 60;
 
     // console.log(`Try to move ${moveDistance} minutes (adjustment:${adjustment})`);
     // console.log(`Distance to previous: ${distanceToPrevious} minutes`);
@@ -839,7 +903,7 @@ const timespanEditor = {
     if (this.selectionType === "end") {
       offset = this.initialEnd.decimalTime * 60;
     }
-    
+
     let moveTo = offset + moveDistance;
 
     const adjustment = Math.abs(moveDistance - (this.lastMoveDistance ?? 0));
@@ -849,28 +913,28 @@ const timespanEditor = {
     // - anything less, doesn't really snap, but adjusts easier to increments of 5, than next to.
     if (adjustment > 10) {
       // Snap to fifteen!
-      moveTo = moveTo - moveTo % 15 + (moveTo % 15 > 7.5 ? 15 : 0);
+      moveTo = moveTo - (moveTo % 15) + (moveTo % 15 > 7.5 ? 15 : 0);
     } else if (adjustment > 3) {
       // Snap to five!
-      moveTo = moveTo - moveTo % 5 + (moveTo % 5 > 2.5 ? 5 : 0);
+      moveTo = moveTo - (moveTo % 5) + (moveTo % 5 > 2.5 ? 5 : 0);
     } else {
       // fine adjustment, only snap on < 1 and > 4
       // - if moveTo is closer to 0 or 5 than 4 or 6, -1 or 1, snap to five (or 0)
       if (moveTo % 5 < 1 || moveTo % 5 > 4) {
         // snap to five!
-        moveTo = moveTo - moveTo % 5 + (moveTo % 5 > 2.5 ? 5 : 0);
+        moveTo = moveTo - (moveTo % 5) + (moveTo % 5 > 2.5 ? 5 : 0);
       }
     }
     moveDistance = moveTo - offset;
-    
+
     // clamp/limit minutes to min distancetoPrevious or max distanceToNext - depending on which part of the timespan is edited
-    if ( this.selectionType !== "end" && moveDistance < distanceToPrevious) {
+    if (this.selectionType !== "end" && moveDistance < distanceToPrevious) {
       moveDistance = distanceToPrevious;
     }
-    if ( this.selectionType !== "start" && moveDistance > distanceToNext) {
+    if (this.selectionType !== "start" && moveDistance > distanceToNext) {
       moveDistance = distanceToNext;
     }
-    
+
     // new TimeCodes has to be created from the initial start time on every edit, to avoid accumulating changes
     const newStartTime = new TimeCode(this.initialStart);
     const newEndTime = new TimeCode(this.initialEnd);
@@ -901,8 +965,5 @@ const timespanEditor = {
     this.span.end.timecode = newEndTime.timecode;
     this.span.position();
     updatePopup(this.span);
-
   },
 };
-
-
